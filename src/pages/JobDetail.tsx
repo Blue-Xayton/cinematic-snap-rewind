@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Download, Share2, CheckCircle2, Loader2, PlayCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Timeline } from "@/components/Timeline";
+import { supabase } from "@/integrations/supabase/client";
 
 type JobStatus = "queued" | "ingesting" | "scoring" | "beat_mapping" | "assembling" | "rendering" | "done" | "error";
 
@@ -27,11 +29,31 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [jobName, setJobName] = useState<string>("");
   const [status, setStatus] = useState<JobStatus>("queued");
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [beatThumbnails, setBeatThumbnails] = useState<BeatThumbnail[]>([]);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
+
+  // Fetch job details
+  useEffect(() => {
+    const fetchJob = async () => {
+      if (!jobId) return;
+      
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('name')
+        .eq('id', jobId)
+        .single();
+      
+      if (data) {
+        setJobName(data.name || `Reel ${jobId.slice(0, 8)}`);
+      }
+    };
+    
+    fetchJob();
+  }, [jobId]);
 
   // Simulate processing pipeline
   useEffect(() => {
@@ -144,8 +166,10 @@ const JobDetail = () => {
           </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground">Job: {jobId}</h1>
-              <p className="mt-2 text-muted-foreground">Processing your video reel</p>
+              <h1 className="text-4xl font-bold text-foreground">{jobName || "Loading..."}</h1>
+              <p className="mt-2 text-muted-foreground">
+                {status === "done" ? "Your reel is ready!" : "Creating your video reel"}
+              </p>
             </div>
             <Badge className={statusColors[status]}>
               {status === "done" ? (
@@ -173,36 +197,20 @@ const JobDetail = () => {
               </p>
             </Card>
 
-            {/* Storyboard */}
+            {/* Interactive Timeline */}
             {beatThumbnails.length > 0 && (
-              <Card className="p-6">
-                <h2 className="mb-4 text-xl font-semibold text-foreground">
-                  Beat Timeline ({beatThumbnails.length} clips)
-                </h2>
-                <div className="relative">
-                  <div className="flex gap-3 overflow-x-auto pb-4">
-                    {beatThumbnails.map((thumb) => (
-                      <div 
-                        key={thumb.index}
-                        className="group relative flex-shrink-0 cursor-pointer"
-                      >
-                        <div className="relative h-40 w-24 overflow-hidden rounded-lg border-2 border-border bg-secondary transition-all hover:border-primary hover:shadow-glow">
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-secondary to-card">
-                            <PlayCircle className="h-8 w-8 text-muted-foreground opacity-50" />
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                          <div className="absolute bottom-2 left-2 text-xs text-foreground">
-                            {thumb.beatTime.toFixed(1)}s
-                          </div>
-                        </div>
-                        <p className="mt-1 text-center text-xs text-muted-foreground">
-                          Beat {thumb.index + 1}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
+              <Timeline 
+                duration={30} 
+                beats={beatThumbnails.map(t => ({ time: t.beatTime, intensity: 0.8 }))}
+                clips={beatThumbnails.slice(0, 8).map((t, i) => ({
+                  id: `clip-${t.index}`,
+                  thumbnail: t.thumbnailUrl,
+                  startTime: i * 3.75,
+                  duration: 3.75,
+                  transition: ["fade", "slide", "zoom", "none"][i % 4] as "fade" | "slide" | "zoom" | "none",
+                }))}
+                currentTime={progress === 100 ? 30 : (progress / 100) * 30}
+              />
             )}
 
             {/* Video Player */}

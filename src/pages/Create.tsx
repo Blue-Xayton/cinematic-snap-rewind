@@ -2,18 +2,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Upload, FileVideo, FileImage, Sparkles, Music } from "lucide-react";
+import { Upload, Sparkles, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { FileUploadItem } from "@/components/FileUploadItem";
 
 const Create = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [jobName, setJobName] = useState("");
   const [mood, setMood] = useState("cinematic");
   const [track, setTrack] = useState("track1");
   const [duration, setDuration] = useState([30]);
@@ -51,10 +54,14 @@ const Create = () => {
       return;
     }
 
+    // Generate default name if not provided
+    const finalName = jobName.trim() || generateDefaultName();
+
     try {
       // Create FormData
       const formData = new FormData();
       files.forEach(file => formData.append('files', file));
+      formData.append('name', finalName);
       formData.append('mood', mood);
       formData.append('track', track);
       formData.append('target_duration', duration[0].toString());
@@ -69,7 +76,7 @@ const Create = () => {
 
       toast({
         title: "Processing started!",
-        description: "Your video reel is being created...",
+        description: `Creating "${finalName}"...`,
       });
       
       // Navigate to job detail page
@@ -81,6 +88,13 @@ const Create = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const generateDefaultName = () => {
+    const date = new Date();
+    const dateStr = date.toISOString().split('T')[0];
+    const timeStr = date.toTimeString().split(':').slice(0, 2).join('');
+    return `MyReel_${dateStr}_${timeStr}`;
   };
 
   const removeFile = (index: number) => {
@@ -105,61 +119,64 @@ const Create = () => {
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Upload Section */}
           <div>
-            <Card className="p-6">
-              <h2 className="mb-4 text-xl font-semibold text-foreground">Upload Media</h2>
+            <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+              <h2 className="mb-4 text-xl font-semibold text-foreground flex items-center gap-2">
+                <Upload className="h-5 w-5 text-primary" />
+                Media Library
+              </h2>
               
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative rounded-xl border-2 border-dashed p-12 text-center transition-all ${
+                className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all ${
                   isDragging 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-primary/50 hover:bg-card/50'
+                    ? 'border-primary bg-primary/10 shadow-glow' 
+                    : 'border-border/50 hover:border-primary/50 hover:bg-card/30'
                 }`}
               >
                 <input
                   type="file"
                   multiple
-                  accept="image/*,video/*"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
                   onChange={handleFileInput}
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
-                <Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="mb-2 text-lg font-medium text-foreground">
-                  Drop files here or click to browse
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Photos, videos, or ZIP files (max 500MB)
-                </p>
+                <div className="pointer-events-none">
+                  <Upload className="mx-auto mb-3 h-10 w-10 text-primary" />
+                  <p className="mb-1 text-base font-medium text-foreground">
+                    Drop files or click to upload
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    JPG, PNG, MP4, MOV • Max 100MB per file
+                  </p>
+                </div>
               </div>
 
               {/* File List */}
               {files.length > 0 && (
-                <div className="mt-6 space-y-2">
-                  <p className="text-sm font-medium text-foreground">
-                    {files.length} file{files.length !== 1 ? 's' : ''} selected
-                  </p>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-border bg-secondary/30 p-3">
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">
+                      {files.length} file{files.length !== 1 ? 's' : ''}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFiles([])}
+                      className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Clear all
+                    </Button>
+                  </div>
+                  <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg bg-muted/20 p-2">
                     {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between rounded-lg bg-card p-2">
-                        <div className="flex items-center gap-2">
-                          {file.type.startsWith('image/') ? (
-                            <FileImage className="h-4 w-4 text-accent" />
-                          ) : (
-                            <FileVideo className="h-4 w-4 text-primary" />
-                          )}
-                          <span className="text-sm text-foreground">{file.name}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="h-6 px-2"
-                        >
-                          ×
-                        </Button>
-                      </div>
+                      <FileUploadItem
+                        key={index}
+                        file={file}
+                        index={index}
+                        onRemove={removeFile}
+                      />
                     ))}
                   </div>
                 </div>
@@ -191,8 +208,29 @@ const Create = () => {
 
           {/* Settings Section */}
           <div className="space-y-6">
-            <Card className="p-6">
-              <h2 className="mb-4 text-xl font-semibold text-foreground">Settings</h2>
+            <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+              <h2 className="mb-6 text-xl font-semibold text-foreground flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Style & Settings
+              </h2>
+
+              {/* Job Name */}
+              <div className="mb-6">
+                <Label htmlFor="job-name" className="mb-2 block text-foreground">
+                  Reel Name
+                </Label>
+                <Input
+                  id="job-name"
+                  type="text"
+                  placeholder="My Summer Memories"
+                  value={jobName}
+                  onChange={(e) => setJobName(e.target.value)}
+                  className="bg-background/50"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Leave blank to auto-generate
+                </p>
+              </div>
               
               {/* Mood Selection */}
               <div className="mb-6">
@@ -265,20 +303,22 @@ const Create = () => {
               </div>
             </Card>
 
-            <Card className="border-primary/20 bg-primary/5 p-6">
+            <Card className="border-primary/30 bg-gradient-card p-6">
               <div className="mb-4 flex items-start gap-3">
-                <Sparkles className="mt-1 h-5 w-5 text-primary" />
+                <div className="rounded-lg bg-primary/20 p-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">AI Processing</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Our AI will analyze every frame, detect the best moments, sync to beats, 
-                    and create a professional edit automatically.
+                  <h3 className="font-semibold text-foreground mb-1">AI Magic</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Smart frame analysis • Beat detection • Auto transitions • Color grading • Professional timing
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                ⏱️ Estimated time: 2-5 minutes
-              </p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                <span>Processing time: 2-5 minutes</span>
+              </div>
             </Card>
 
             <Button 

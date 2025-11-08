@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const formData = await req.formData()
+    const name = formData.get('name') as string
     const mood = formData.get('mood') as string
     const track = formData.get('track') as string
     const target_duration = parseInt(formData.get('target_duration') as string)
@@ -39,6 +40,7 @@ Deno.serve(async (req) => {
       .from('jobs')
       .insert({
         user_id: user.id,
+        name: name || `Reel_${new Date().toISOString().split('T')[0]}`,
         mood,
         track,
         target_duration,

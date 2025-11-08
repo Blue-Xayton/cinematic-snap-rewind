@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Job {
   id: string;
+  name: string;
   status: "queued" | "processing" | "done" | "error";
   created_at: string;
   target_duration: number;
@@ -137,11 +138,9 @@ const JobList = () => {
 
                 {/* Info */}
                 <div className="p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-mono text-muted-foreground">
-                      {job.id.slice(0, 16)}...
-                    </span>
-                  </div>
+                  <h3 className="font-semibold text-foreground mb-2 truncate">
+                    {job.name || `Reel ${job.id.slice(0, 8)}`}
+                  </h3>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">

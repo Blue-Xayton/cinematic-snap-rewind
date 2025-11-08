@@ -53,6 +53,7 @@ export type Database = {
           final_video_url: string | null
           id: string
           mood: string
+          name: string
           progress: number | null
           status: string
           target_duration: number
@@ -66,6 +67,7 @@ export type Database = {
           final_video_url?: string | null
           id?: string
           mood: string
+          name?: string
           progress?: number | null
           status?: string
           target_duration?: number
@@ -79,6 +81,7 @@ export type Database = {
           final_video_url?: string | null
           id?: string
           mood?: string
+          name?: string
           progress?: number | null
           status?: string
           target_duration?: number
