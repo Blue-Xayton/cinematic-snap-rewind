@@ -41,7 +41,7 @@ const Create = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (files.length === 0) {
       toast({
         title: "No files selected",
@@ -51,17 +51,36 @@ const Create = () => {
       return;
     }
 
-    // Simulate job creation
-    const mockJobId = `job_${Date.now()}`;
-    toast({
-      title: "Processing started!",
-      description: "Your video reel is being created...",
-    });
-    
-    // Navigate to job detail page
-    setTimeout(() => {
-      navigate(`/jobs/${mockJobId}`);
-    }, 500);
+    try {
+      // Create FormData
+      const formData = new FormData();
+      files.forEach(file => formData.append('files', file));
+      formData.append('mood', mood);
+      formData.append('track', track);
+      formData.append('target_duration', duration[0].toString());
+
+      // Call create-job edge function
+      const supabase = (await import("@/integrations/supabase/client")).supabase;
+      const { data, error } = await supabase.functions.invoke('create-job', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Processing started!",
+        description: "Your video reel is being created...",
+      });
+      
+      // Navigate to job detail page
+      navigate(`/jobs/${data.job_id}`);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create job",
+        variant: "destructive",
+      });
+    }
   };
 
   const removeFile = (index: number) => {

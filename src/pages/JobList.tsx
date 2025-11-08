@@ -1,45 +1,50 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Film, Clock, CheckCircle2, PlayCircle, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Job {
   id: string;
   status: "queued" | "processing" | "done" | "error";
-  createdAt: string;
-  duration: number;
-  thumbnailUrl?: string;
+  created_at: string;
+  target_duration: number;
   mood: string;
+  progress: number;
 }
 
 const JobList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const jobs: Job[] = [
-    {
-      id: "job_1234567890",
-      status: "done",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      duration: 30,
-      mood: "cinematic",
-    },
-    {
-      id: "job_1234567891",
-      status: "processing",
-      createdAt: new Date(Date.now() - 600000).toISOString(),
-      duration: 45,
-      mood: "energetic",
-    },
-    {
-      id: "job_1234567892",
-      status: "done",
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-      duration: 30,
-      mood: "chill",
-    },
-  ];
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setJobs((data || []) as Job[]);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch jobs",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: Job["status"]) => {
     const variants = {
@@ -66,6 +71,14 @@ const JobList = () => {
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,7 +131,7 @@ const JobList = () => {
                   
                   {/* Duration */}
                   <div className="absolute bottom-3 right-3 rounded-lg bg-background/80 px-2 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
-                    {job.duration}s
+                    {job.target_duration}s
                   </div>
                 </div>
 
@@ -133,7 +146,7 @@ const JobList = () => {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {formatTimeAgo(job.createdAt)}
+                      {formatTimeAgo(job.created_at)}
                     </div>
                     <div className="capitalize">
                       {job.mood}

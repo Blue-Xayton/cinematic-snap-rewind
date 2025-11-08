@@ -1,0 +1,7 @@
+project_id = "vcohrdkwnpkueazrovmo"
+
+[functions.create-job]
+verify_jwt = true
+
+[functions.analyze-media]
+verify_jwt = false
