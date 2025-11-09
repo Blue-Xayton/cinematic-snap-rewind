@@ -242,6 +242,9 @@ const JobDetail = () => {
   const handleTransitionChange = (transition: "fade" | "slide" | "zoom" | "none") => {
     if (!selectedClipId) return;
     
+    const currentClip = timelineClips.find(c => c.id === selectedClipId);
+    if (!currentClip || currentClip.transition === transition) return;
+    
     setTimelineClips(prev => 
       prev.map(clip => 
         clip.id === selectedClipId 
