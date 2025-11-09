@@ -13,6 +13,7 @@ interface TutorialStep {
   description: string;
   route?: string; // Route to navigate to
   target?: string; // CSS selector for highlighting
+  action?: string; // Special action to perform on this step
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -39,15 +40,17 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "customize",
     title: "Customize Your Reel 🎨",
-    description: "Switch to custom mode to adjust mood, music, and duration settings.",
+    description: "Or switch to custom mode to manually adjust mood, music, and duration settings.",
     route: "/create",
     target: "[data-tutorial='custom-settings']",
+    action: "switch-to-custom", // Special action to trigger mode switch
   },
   {
-    id: "share",
-    title: "Share Your Creation 🚀",
-    description: "Once your video is ready, you can view it in your job list and share it with friends!",
+    id: "jobs",
+    title: "View Your Reels 🎥",
+    description: "Your completed reels will appear here. Click on any reel to view, share, or download it!",
     route: "/jobs",
+    target: "[data-tutorial='job-list']",
   },
 ];
 
@@ -106,8 +109,18 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
     if (!isVisible) return;
     
     const step = TUTORIAL_STEPS[currentStep];
+    
+    // Navigate to route if different
     if (step.route && location.pathname !== step.route) {
       navigate(step.route);
+    }
+    
+    // Trigger special actions
+    if (step.action === 'switch-to-custom') {
+      // Dispatch custom event to switch mode in Create page
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tutorial-switch-mode', { detail: 'custom' }));
+      }, 600);
     }
   }, [currentStep, isVisible, navigate, location.pathname]);
 

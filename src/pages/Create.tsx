@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,20 @@ const Create = () => {
   const [duration, setDuration] = useState([30]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [mode, setMode] = useState<"template" | "custom">("template");
+  
+  // Listen for tutorial mode switch events
+  useEffect(() => {
+    const handleTutorialModeSwitch = (e: CustomEvent) => {
+      if (e.detail === 'custom') {
+        setMode('custom');
+      }
+    };
+    
+    window.addEventListener('tutorial-switch-mode', handleTutorialModeSwitch as EventListener);
+    return () => {
+      window.removeEventListener('tutorial-switch-mode', handleTutorialModeSwitch as EventListener);
+    };
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();

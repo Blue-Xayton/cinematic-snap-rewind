@@ -225,7 +225,7 @@ const JobList = () => {
             </Button>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-tutorial="job-list">
             {filteredJobs.map((job) => (
               <Card 
                 key={job.id}
