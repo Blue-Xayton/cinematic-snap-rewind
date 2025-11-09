@@ -192,7 +192,7 @@ const Create = () => {
         </div>
 
         {/* Mode Selector */}
-        <div className="mb-8">
+        <div className="mb-8" data-tutorial="mode-selector">
           <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
             <div className="flex items-center justify-center gap-4">
               <Button
@@ -216,7 +216,7 @@ const Create = () => {
 
         {/* Template Selector */}
         {mode === "template" && (
-          <div className="mb-8">
+          <div className="mb-8" data-tutorial="template-selector">
             <TemplateSelector 
               onSelectTemplate={handleSelectTemplate}
               selectedTemplateId={selectedTemplateId}
@@ -330,7 +330,7 @@ const Create = () => {
           {/* Settings Section */}
           <div className="space-y-6">
             {mode === "custom" && (
-              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50" data-tutorial="custom-settings">
                 <h2 className="mb-6 text-xl font-semibold text-foreground flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   Custom Settings
