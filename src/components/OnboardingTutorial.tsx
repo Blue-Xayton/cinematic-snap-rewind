@@ -136,8 +136,15 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
         // Add highlight to current element
         element.classList.add('tutorial-highlight');
         
+        // Make element interactive (clickable)
+        const originalPointerEvents = (element as HTMLElement).style.pointerEvents;
+        (element as HTMLElement).style.pointerEvents = 'auto';
+        
         // Scroll element into view
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Store original value to restore later
+        (element as any)._originalPointerEvents = originalPointerEvents;
       }
     }, 500);
 
@@ -146,6 +153,10 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
       // Cleanup highlights when component unmounts
       document.querySelectorAll('.tutorial-highlight').forEach(el => {
         el.classList.remove('tutorial-highlight');
+        // Restore original pointer events
+        if ((el as any)._originalPointerEvents !== undefined) {
+          (el as HTMLElement).style.pointerEvents = (el as any)._originalPointerEvents;
+        }
       });
     };
   }, [currentStep, isVisible]);
@@ -203,18 +214,31 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
   if (!isVisible) return null;
 
   const step = TUTORIAL_STEPS[currentStep];
+  const hasTarget = !!step.target;
 
   return (
     <>
-      {/* Backdrop overlay - less blur, darker */}
-      <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-[2px]" />
+      {/* Dark overlay - NO blur, with pointer-events-none to allow clicking through */}
+      <div className="fixed inset-0 z-40 bg-black/60 pointer-events-none" />
       
       {/* Tutorial card */}
-      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 pointer-events-none">
-        <Card className="w-full max-w-lg p-6 shadow-2xl pointer-events-auto animate-scale-in">
+      <div className={`fixed z-50 pointer-events-none ${
+        hasTarget 
+          ? 'bottom-4 left-1/2 -translate-x-1/2 md:bottom-auto md:top-4 md:left-4 md:translate-x-0' 
+          : 'inset-0 flex items-center justify-center'
+      } p-4`}>
+        <Card className="w-full max-w-lg p-6 shadow-2xl pointer-events-auto animate-scale-in relative">
+          {/* Arrow pointer to highlighted element */}
+          {hasTarget && (
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 md:hidden">
+              <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[12px] border-t-border" />
+              <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-card absolute -top-[11px] left-1/2 -translate-x-1/2" />
+            </div>
+          )}
+          
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground font-medium">
               Step {currentStep + 1} of {TUTORIAL_STEPS.length}
             </div>
             <Button
@@ -238,6 +262,15 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
             <p className="text-muted-foreground leading-relaxed">
               {step.description}
             </p>
+            {hasTarget && (
+              <p className="text-sm text-primary font-medium mt-3 flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+                Try clicking the highlighted area below!
+              </p>
+            )}
           </div>
 
           {/* Navigation */}
@@ -246,29 +279,31 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
+              size="sm"
             >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Previous
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back
             </Button>
 
             <Button
               variant="ghost"
               onClick={handleSkip}
-              className="text-muted-foreground"
+              className="text-muted-foreground text-sm"
+              size="sm"
             >
-              Skip Tutorial
+              Skip
             </Button>
 
-            <Button onClick={handleNext} variant="hero">
+            <Button onClick={handleNext} variant="hero" size="sm">
               {currentStep === TUTORIAL_STEPS.length - 1 ? (
                 <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Finish
+                  <Check className="h-4 w-4 mr-1" />
+                  Done
                 </>
               ) : (
                 <>
                   Next
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </>
               )}
             </Button>
@@ -281,27 +316,53 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
         .tutorial-highlight {
           position: relative;
           z-index: 45 !important;
-          animation: pulse-highlight 2s infinite;
-          box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5) !important;
-          border-radius: 8px;
-          background-color: hsl(var(--background)) !important;
+          animation: pulse-glow 2s infinite;
+          pointer-events: auto !important;
         }
         
         .tutorial-highlight::before {
           content: '';
           position: absolute;
-          inset: -8px;
+          inset: -4px;
           background: hsl(var(--background));
+          border: 3px solid hsl(var(--primary));
           border-radius: 12px;
           z-index: -1;
+          pointer-events: none;
         }
         
-        @keyframes pulse-highlight {
+        .tutorial-highlight::after {
+          content: '👆 Click here';
+          position: absolute;
+          top: -40px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          white-space: nowrap;
+          pointer-events: none;
+          animation: bounce 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
           0%, 100% {
-            box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5);
+            filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6));
           }
           50% {
-            box-shadow: 0 0 0 8px hsl(var(--primary)), 0 0 30px hsl(var(--primary) / 0.7);
+            filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.9));
+          }
+        }
+        
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateX(-50%) translateY(0);
+          }
+          50% {
+            transform: translateX(-50%) translateY(-5px);
           }
         }
       `}</style>
