@@ -1,9 +1,9 @@
-import { useState, ChangeEvent } from 'react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Upload, Video, Loader2 } from 'lucide-react';
-import { toast } from './ui/use-toast';
+import { useState, ChangeEvent } from "react";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Upload, Video, Loader2 } from "lucide-react";
+import { toast } from "./ui/use-toast";
 
 // Define the backend response type from FastAPI
 interface UploadResponse {
@@ -14,7 +14,7 @@ interface UploadResponse {
 
 /**
  * VideoPreview Component
- * 
+ *
  * Integrates with Python FastAPI backend for ReliveAI video generation
  * - Allows users to upload multiple images/videos
  * - Sends files to backend at http://localhost:8000/upload/
@@ -23,13 +23,13 @@ interface UploadResponse {
 export const VideoPreview = () => {
   // State for selected files from user input
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  
+
   // State for optional reel title (defaults to "My Reel")
-  const [title, setTitle] = useState<string>('My Reel');
-  
+  const [title, setTitle] = useState<string>("My Reel");
+
   // State to track backend processing status
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  
+
   // State to store the generated video URL from backend
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
 
@@ -43,20 +43,20 @@ export const VideoPreview = () => {
 
     // Convert FileList to Array for easier manipulation
     const fileArray = Array.from(files);
-    
+
     // Filter for valid image/video MIME types
-    const validFiles = fileArray.filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
+    const validFiles = fileArray.filter((file) => {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
       return isImage || isVideo;
     });
 
     // Show error if no valid files selected
     if (validFiles.length === 0) {
       toast({
-        title: 'Invalid files',
-        description: 'Please select image or video files only',
-        variant: 'destructive',
+        title: "Invalid files",
+        description: "Please select image or video files only",
+        variant: "destructive",
       });
       return;
     }
@@ -64,7 +64,7 @@ export const VideoPreview = () => {
     // Update state with valid files
     setSelectedFiles(validFiles);
     toast({
-      title: 'Files selected',
+      title: "Files selected",
       description: `${validFiles.length} file(s) ready for upload`,
     });
   };
@@ -77,9 +77,9 @@ export const VideoPreview = () => {
     // Validate that files are selected
     if (selectedFiles.length === 0) {
       toast({
-        title: 'No files selected',
-        description: 'Please select files before uploading',
-        variant: 'destructive',
+        title: "No files selected",
+        description: "Please select files before uploading",
+        variant: "destructive",
       });
       return;
     }
@@ -91,18 +91,18 @@ export const VideoPreview = () => {
     try {
       // Create FormData for multipart upload
       const formData = new FormData();
-      
+
       // Append all selected files with key "files" (FastAPI expects List[UploadFile])
-      selectedFiles.forEach(file => {
-        formData.append('files', file);
+      selectedFiles.forEach((file) => {
+        formData.append("files", file);
       });
-      
+
       // Construct URL with title as query parameter
-      const uploadUrl = `http://localhost:8000/upload/?title=${encodeURIComponent(title)}`;
+      const uploadUrl = `https://sporular-georgiana-anacoluthically.ngrok-free.dev/upload/?title=${encodeURIComponent(title)}`;
 
       // Send POST request to backend
       const response = await fetch(uploadUrl, {
-        method: 'POST',
+        method: "POST",
         body: formData,
         // Note: Don't set Content-Type header - browser sets it automatically with boundary
       });
@@ -117,22 +117,22 @@ export const VideoPreview = () => {
 
       // Construct full video URL from relative path
       // Backend returns: "/videos/My_Reel.mp4"
-      const videoUrl = `http://localhost:8000${data.output_video}`;
+      const videoUrl = `https://sporular-georgiana-anacoluthically.ngrok-free.dev${data.output_video}`;
+
       setGeneratedVideoUrl(videoUrl);
 
       // Show success notification
       toast({
-        title: 'Video generated!',
+        title: "Video generated!",
         description: `Processed ${data.files_processed} files successfully`,
       });
-
     } catch (error) {
       // Handle errors and show user feedback
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       toast({
-        title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: 'destructive',
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
       });
     } finally {
       // Always reset processing state
@@ -146,7 +146,7 @@ export const VideoPreview = () => {
   const handleReset = () => {
     setSelectedFiles([]);
     setGeneratedVideoUrl(null);
-    setTitle('My Reel');
+    setTitle("My Reel");
   };
 
   return (
@@ -154,9 +154,7 @@ export const VideoPreview = () => {
       {/* Header Section */}
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-foreground">ReliveAI Video Generator</h2>
-        <p className="text-muted-foreground">
-          Upload your images and videos to create a cinematic reel powered by AI
-        </p>
+        <p className="text-muted-foreground">Upload your images and videos to create a cinematic reel powered by AI</p>
       </div>
 
       {/* Upload Interface - shown before video is generated */}
@@ -192,18 +190,14 @@ export const VideoPreview = () => {
               disabled={isProcessing}
               className="cursor-pointer file:cursor-pointer"
             />
-            <p className="text-xs text-muted-foreground">
-              Select multiple images or videos (JPG, PNG, MP4, MOV, etc.)
-            </p>
+            <p className="text-xs text-muted-foreground">Select multiple images or videos (JPG, PNG, MP4, MOV, etc.)</p>
           </div>
 
           {/* Selected Files Counter */}
           {selectedFiles.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-3 bg-secondary/50 rounded-lg">
               <Video className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                {selectedFiles.length} file(s) selected
-              </span>
+              <span className="text-sm font-medium text-foreground">{selectedFiles.length} file(s) selected</span>
             </div>
           )}
 
@@ -241,13 +235,7 @@ export const VideoPreview = () => {
         <div className="space-y-4">
           {/* Video Container - 9:16 aspect ratio for vertical video */}
           <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden max-w-md mx-auto shadow-xl">
-            <video
-              src={generatedVideoUrl}
-              controls
-              autoPlay
-              loop
-              className="w-full h-full object-contain"
-            >
+            <video src={generatedVideoUrl} controls autoPlay loop className="w-full h-full object-contain">
               Your browser does not support the video tag.
             </video>
           </div>
@@ -260,9 +248,9 @@ export const VideoPreview = () => {
             <Button
               onClick={() => {
                 // Download video by creating temporary link
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = generatedVideoUrl;
-                link.download = `${title.replace(/\s+/g, '_')}.mp4`;
+                link.download = `${title.replace(/\s+/g, "_")}.mp4`;
                 link.click();
               }}
               size="lg"
