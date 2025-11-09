@@ -13,7 +13,15 @@ import { FileUploadItem } from "@/components/FileUploadItem";
 import { MediaPreviewGallery } from "@/components/MediaPreviewGallery";
 import { TemplateSelector } from "@/components/TemplateSelector";
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 const Create = () => {
@@ -30,18 +38,18 @@ const Create = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [processingError, setProcessingError] = useState<string | null>(null);
-  
+
   // Listen for tutorial mode switch events
   useEffect(() => {
     const handleTutorialModeSwitch = (e: CustomEvent) => {
-      if (e.detail === 'custom') {
-        setMode('custom');
+      if (e.detail === "custom") {
+        setMode("custom");
       }
     };
-    
-    window.addEventListener('tutorial-switch-mode', handleTutorialModeSwitch as EventListener);
+
+    window.addEventListener("tutorial-switch-mode", handleTutorialModeSwitch as EventListener);
     return () => {
-      window.removeEventListener('tutorial-switch-mode', handleTutorialModeSwitch as EventListener);
+      window.removeEventListener("tutorial-switch-mode", handleTutorialModeSwitch as EventListener);
     };
   }, []);
 
@@ -68,11 +76,11 @@ const Create = () => {
     e.preventDefault();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
-    
+
     const validFiles: File[] = [];
     const errors: string[] = [];
-    
-    droppedFiles.forEach(file => {
+
+    droppedFiles.forEach((file) => {
       const error = validateFile(file);
       if (error) {
         errors.push(error);
@@ -80,28 +88,28 @@ const Create = () => {
         validFiles.push(file);
       }
     });
-    
+
     if (errors.length > 0) {
       toast({
         title: "Invalid files",
-        description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ''),
+        description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ""),
         variant: "destructive",
       });
     }
-    
+
     if (validFiles.length > 0) {
-      setFiles(prev => [...prev, ...validFiles]);
+      setFiles((prev) => [...prev, ...validFiles]);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      
+
       const validFiles: File[] = [];
       const errors: string[] = [];
-      
-      selectedFiles.forEach(file => {
+
+      selectedFiles.forEach((file) => {
         const error = validateFile(file);
         if (error) {
           errors.push(error);
@@ -109,17 +117,17 @@ const Create = () => {
           validFiles.push(file);
         }
       });
-      
+
       if (errors.length > 0) {
         toast({
           title: "Invalid files",
-          description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ''),
+          description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ""),
           variant: "destructive",
         });
       }
-      
+
       if (validFiles.length > 0) {
-        setFiles(prev => [...prev, ...validFiles]);
+        setFiles((prev) => [...prev, ...validFiles]);
       }
     }
   };
@@ -144,14 +152,14 @@ const Create = () => {
     try {
       // Create FormData for FastAPI backend
       const formData = new FormData();
-      files.forEach(file => formData.append('files', file));
-      
+      files.forEach((file) => formData.append("files", file));
+
       // Construct URL with title as query parameter
       const uploadUrl = `http://localhost:8000/upload/?title=${encodeURIComponent(finalName)}`;
 
       // Send POST request to backend
       const response = await fetch(uploadUrl, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
@@ -171,26 +179,26 @@ const Create = () => {
         title: "Video generated successfully!",
         description: `Processed ${data.files_processed} files`,
       });
-
     } catch (error: any) {
-      console.error('Upload error:', error);
-      
+      console.error("Upload error:", error);
+
       // Provide helpful error messages based on error type
       let errorMessage = "Failed to connect to backend";
       let errorDetails = "";
-      
+
       if (error.message?.includes("Failed to fetch") || error.name === "TypeError") {
         errorMessage = "Cannot connect to backend server";
-        errorDetails = "Make sure your FastAPI backend is running at http://localhost:8000. If running on Lovable preview, you need to use a tunneling service like ngrok.";
+        errorDetails =
+          "Make sure your FastAPI backend is running at http://localhost:8000. If running on Lovable preview, you need to use a tunneling service like ngrok.";
       } else if (error.message?.includes("500")) {
         errorMessage = "Backend server error";
         errorDetails = error.message;
       } else {
         errorMessage = error.message || "Unknown error occurred";
       }
-      
+
       setProcessingError(`${errorMessage}\n${errorDetails}`);
-      
+
       toast({
         title: errorMessage,
         description: errorDetails || "Check console for details",
@@ -203,13 +211,13 @@ const Create = () => {
 
   const generateDefaultName = () => {
     const date = new Date();
-    const dateStr = date.toISOString().split('T')[0];
-    const timeStr = date.toTimeString().split(':').slice(0, 2).join('');
+    const dateStr = date.toISOString().split("T")[0];
+    const timeStr = date.toTimeString().split(":").slice(0, 2).join("");
     return `MyReel_${dateStr}_${timeStr}`;
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSelectTemplate = (template: any) => {
@@ -217,7 +225,7 @@ const Create = () => {
     setMood(template.mood);
     setTrack(template.track);
     setDuration([template.target_duration]);
-    
+
     toast({
       title: "Template applied",
       description: `Using "${template.name}" settings`,
@@ -228,11 +236,7 @@ const Create = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/')}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
             ← Back
           </Button>
           <h1 className="text-4xl font-bold text-foreground">Create Your Reel</h1>
@@ -265,10 +269,7 @@ const Create = () => {
         {/* Template Selector */}
         {mode === "template" && (
           <div className="mb-8" data-tutorial="template-selector">
-            <TemplateSelector 
-              onSelectTemplate={handleSelectTemplate}
-              selectedTemplateId={selectedTemplateId}
-            />
+            <TemplateSelector onSelectTemplate={handleSelectTemplate} selectedTemplateId={selectedTemplateId} />
           </div>
         )}
 
@@ -280,16 +281,16 @@ const Create = () => {
                 <Upload className="h-5 w-5 text-primary" />
                 Media Library
               </h2>
-              
+
               <div
                 data-tutorial="upload-area"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all ${
-                  isDragging 
-                    ? 'border-primary bg-primary/10 shadow-glow' 
-                    : 'border-border/50 hover:border-primary/50 hover:bg-card/30'
+                  isDragging
+                    ? "border-primary bg-primary/10 shadow-glow"
+                    : "border-border/50 hover:border-primary/50 hover:bg-card/30"
                 }`}
               >
                 <input
@@ -301,12 +302,8 @@ const Create = () => {
                 />
                 <div className="pointer-events-none">
                   <Upload className="mx-auto mb-3 h-10 w-10 text-primary" />
-                  <p className="mb-1 text-base font-medium text-foreground">
-                    Drop files or click to upload
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    JPG, PNG, MP4, MOV • Max 100MB per file
-                  </p>
+                  <p className="mb-1 text-base font-medium text-foreground">Drop files or click to upload</p>
+                  <p className="text-sm text-muted-foreground">JPG, PNG, MP4, MOV • Max 100MB per file</p>
                 </div>
               </div>
 
@@ -315,7 +312,7 @@ const Create = () => {
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-foreground">
-                      {files.length} file{files.length !== 1 ? 's' : ''}
+                      {files.length} file{files.length !== 1 ? "s" : ""}
                     </p>
                     <Button
                       variant="ghost"
@@ -328,12 +325,7 @@ const Create = () => {
                   </div>
                   <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg bg-muted/20 p-2">
                     {files.map((file, index) => (
-                      <FileUploadItem
-                        key={index}
-                        file={file}
-                        index={index}
-                        onRemove={removeFile}
-                      />
+                      <FileUploadItem key={index} file={file} index={index} onRemove={removeFile} />
                     ))}
                   </div>
                 </div>
@@ -342,16 +334,13 @@ const Create = () => {
               {/* Media Preview Gallery */}
               {files.length > 0 && (
                 <div className="mt-6">
-                  <MediaPreviewGallery 
-                    files={files}
-                    onRemove={removeFile}
-                  />
+                  <MediaPreviewGallery files={files} onRemove={removeFile} />
                 </div>
               )}
 
               <div className="mt-6">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={() => {
                     // Create sample files with correct MIME types
@@ -385,94 +374,75 @@ const Create = () => {
                   Custom Settings
                 </h2>
 
-              {/* Job Name */}
-              <div className="mb-6">
-                <Label htmlFor="job-name" className="mb-2 block text-foreground">
-                  Reel Name
-                </Label>
-                <Input
-                  id="job-name"
-                  type="text"
-                  placeholder="My Summer Memories"
-                  value={jobName}
-                  onChange={(e) => setJobName(e.target.value)}
-                  className="bg-background/50"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Leave blank to auto-generate
-                </p>
-              </div>
-              
-              {/* Mood Selection */}
-              <div className="mb-6">
-                <Label className="mb-3 block text-foreground">Mood</Label>
-                <RadioGroup value={mood} onValueChange={setMood}>
-                  <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                    <RadioGroupItem value="cinematic" id="cinematic" />
-                    <Label htmlFor="cinematic" className="flex-1 cursor-pointer">
-                      <span className="font-medium text-foreground">Cinematic</span>
-                      <span className="block text-sm text-muted-foreground">
-                        Dramatic contrasts, rich colors
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                    <RadioGroupItem value="energetic" id="energetic" />
-                    <Label htmlFor="energetic" className="flex-1 cursor-pointer">
-                      <span className="font-medium text-foreground">Energetic</span>
-                      <span className="block text-sm text-muted-foreground">
-                        Vibrant, high saturation
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                    <RadioGroupItem value="chill" id="chill" />
-                    <Label htmlFor="chill" className="flex-1 cursor-pointer">
-                      <span className="font-medium text-foreground">Chill</span>
-                      <span className="block text-sm text-muted-foreground">
-                        Soft, desaturated tones
-                      </span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                {/* Job Name */}
+                <div className="mb-6">
+                  <Label htmlFor="job-name" className="mb-2 block text-foreground">
+                    Reel Name
+                  </Label>
+                  <Input
+                    id="job-name"
+                    type="text"
+                    placeholder="My Summer Memories"
+                    value={jobName}
+                    onChange={(e) => setJobName(e.target.value)}
+                    className="bg-background/50"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Leave blank to auto-generate</p>
+                </div>
 
-              {/* Music Track */}
-              <div className="mb-6">
-                <Label className="mb-3 block text-foreground">
-                  <Music className="mr-2 inline h-4 w-4" />
-                  Music Track
-                </Label>
-                <Select value={track} onValueChange={setTrack}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="track1">Upbeat Summer (98 BPM)</SelectItem>
-                    <SelectItem value="track2">Emotional Piano (72 BPM)</SelectItem>
-                    <SelectItem value="track3">Epic Cinematic (110 BPM)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* Mood Selection */}
+                <div className="mb-6">
+                  <Label className="mb-3 block text-foreground">Mood</Label>
+                  <RadioGroup value={mood} onValueChange={setMood}>
+                    <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                      <RadioGroupItem value="cinematic" id="cinematic" />
+                      <Label htmlFor="cinematic" className="flex-1 cursor-pointer">
+                        <span className="font-medium text-foreground">Cinematic</span>
+                        <span className="block text-sm text-muted-foreground">Dramatic contrasts, rich colors</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                      <RadioGroupItem value="energetic" id="energetic" />
+                      <Label htmlFor="energetic" className="flex-1 cursor-pointer">
+                        <span className="font-medium text-foreground">Energetic</span>
+                        <span className="block text-sm text-muted-foreground">Vibrant, high saturation</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                      <RadioGroupItem value="chill" id="chill" />
+                      <Label htmlFor="chill" className="flex-1 cursor-pointer">
+                        <span className="font-medium text-foreground">Chill</span>
+                        <span className="block text-sm text-muted-foreground">Soft, desaturated tones</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
 
-              {/* Duration */}
-              <div>
-                <Label className="mb-3 block text-foreground">
-                  Target Duration: {duration[0]}s
-                </Label>
-                <Slider
-                  value={duration}
-                  onValueChange={setDuration}
-                  min={15}
-                  max={60}
-                  step={5}
-                  className="mb-2"
-                />
-                <p className="text-sm text-muted-foreground">
-                  15s - 60s (recommended: 30s for social media)
-                </p>
-              </div>
-            </Card>
+                {/* Music Track */}
+                <div className="mb-6">
+                  <Label className="mb-3 block text-foreground">
+                    <Music className="mr-2 inline h-4 w-4" />
+                    Music Track
+                  </Label>
+                  <Select value={track} onValueChange={setTrack}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="track1">Upbeat Summer (98 BPM)</SelectItem>
+                      <SelectItem value="track2">Emotional Piano (72 BPM)</SelectItem>
+                      <SelectItem value="track3">Epic Cinematic (110 BPM)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <Label className="mb-3 block text-foreground">Target Duration: {duration[0]}s</Label>
+                  <Slider value={duration} onValueChange={setDuration} min={15} max={60} step={5} className="mb-2" />
+                  <p className="text-sm text-muted-foreground">15s - 60s (recommended: 30s for social media)</p>
+                </div>
+              </Card>
             )}
 
             {mode === "template" && selectedTemplateId && (
@@ -482,7 +452,8 @@ const Create = () => {
                   Template Selected
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Your reel will be created using the selected template's pre-configured mood, music, and duration settings.
+                  Your reel will be created using the selected template's pre-configured mood, music, and duration
+                  settings.
                 </p>
               </Card>
             )}
@@ -495,7 +466,8 @@ const Create = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">AI-Powered Processing</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    Our advanced AI will analyze your media, detect optimal beats, and create smooth transitions for a professional reel.
+                    Our advanced AI will analyze your media, detect optimal beats, and create smooth transitions for a
+                    professional reel.
                   </p>
                   <ul className="space-y-1 text-xs text-muted-foreground">
                     <li>✓ Intelligent scene selection</li>
@@ -508,8 +480,8 @@ const Create = () => {
 
               <Button
                 data-tutorial="create-button"
-                size="lg" 
-                variant="hero" 
+                size="lg"
+                variant="hero"
                 className="w-full text-lg"
                 onClick={handleSubmit}
                 disabled={files.length === 0 || isProcessing || (mode === "template" && !selectedTemplateId)}
@@ -532,7 +504,7 @@ const Create = () => {
             {(generatedVideoUrl || processingError || isProcessing) && (
               <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
                 <h2 className="mb-4 text-xl font-semibold text-foreground">Preview</h2>
-                
+
                 {isProcessing && (
                   <div className="flex flex-col items-center justify-center py-16 space-y-4">
                     <Sparkles className="h-12 w-12 animate-spin text-primary" />
@@ -549,15 +521,10 @@ const Create = () => {
                     </div>
                     <div className="space-y-2 max-w-lg">
                       <h3 className="font-semibold text-foreground text-lg">Connection Failed</h3>
-                      <p className="text-sm text-muted-foreground whitespace-pre-line">
-                        {processingError}
-                      </p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">{processingError}</p>
                     </div>
                     <div className="flex gap-3">
-                      <Button
-                        onClick={handleSubmit}
-                        variant="default"
-                      >
+                      <Button onClick={handleSubmit} variant="default">
                         Retry Upload
                       </Button>
                       <Button
@@ -573,8 +540,21 @@ const Create = () => {
                     <Card className="bg-muted/30 p-4 text-xs text-left max-w-md border-border/50">
                       <p className="font-semibold text-foreground mb-2">💡 Troubleshooting:</p>
                       <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
-                        <li>Start backend: <code className="bg-background px-1.5 py-0.5 rounded text-primary">python main.py</code></li>
-                        <li>Verify backend health at <a href="http://localhost:8000" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">localhost:8000</a></li>
+                        <li>
+                          Start backend:{" "}
+                          <code className="bg-background px-1.5 py-0.5 rounded text-primary">python main.py</code>
+                        </li>
+                        <li>
+                          Verify backend health at{" "}
+                          <a
+                            href="http://localhost:8000"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            localhost:8000
+                          </a>
+                        </li>
                         <li>Check CORS is enabled in backend (allow_origins=["*"])</li>
                         <li>If on Lovable preview URL, use ngrok to expose localhost</li>
                       </ul>
@@ -585,17 +565,11 @@ const Create = () => {
                 {generatedVideoUrl && !isProcessing && (
                   <div className="space-y-4">
                     <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden max-w-md mx-auto shadow-xl">
-                      <video
-                        src={generatedVideoUrl}
-                        controls
-                        autoPlay
-                        loop
-                        className="w-full h-full object-contain"
-                      >
+                      <video src={generatedVideoUrl} controls autoPlay loop className="w-full h-full object-contain">
                         Your browser does not support the video tag.
                       </video>
                     </div>
-                    
+
                     <div className="flex gap-4 justify-center flex-wrap">
                       <Button
                         onClick={() => {
@@ -609,9 +583,9 @@ const Create = () => {
                       </Button>
                       <Button
                         onClick={() => {
-                          const link = document.createElement('a');
+                          const link = document.createElement("a");
                           link.href = generatedVideoUrl;
-                          link.download = `${jobName.trim() || 'MyReel'}.mp4`;
+                          link.download = `${jobName.trim() || "MyReel"}.mp4`;
                           link.click();
                         }}
                       >
