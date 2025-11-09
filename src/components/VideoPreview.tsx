@@ -1,152 +1,277 @@
-import { useEffect, useRef, useState } from 'react';
-import { useEditorStore } from '@/stores/editorStore';
+import { useState, ChangeEvent } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Play, Pause } from 'lucide-react';
+import { Input } from './ui/input';
+import { Upload, Video, Loader2 } from 'lucide-react';
+import { toast } from './ui/use-toast';
 
+// Define the backend response type from FastAPI
+interface UploadResponse {
+  message: string;
+  output_video: string; // e.g., "/videos/My_Reel.mp4"
+  files_processed: number;
+}
+
+/**
+ * VideoPreview Component
+ * 
+ * Integrates with Python FastAPI backend for ReliveAI video generation
+ * - Allows users to upload multiple images/videos
+ * - Sends files to backend at http://localhost:8000/upload/
+ * - Displays generated cinematic reel with controls
+ */
 export const VideoPreview = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [currentClipIndex, setCurrentClipIndex] = useState(0);
+  // State for selected files from user input
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
-  const {
-    clips,
-    selectedClipId,
-    currentTime,
-    isPlaying,
-    textOverlays,
-    setCurrentTime,
-    setIsPlaying,
-  } = useEditorStore();
+  // State for optional reel title (defaults to "My Reel")
+  const [title, setTitle] = useState<string>('My Reel');
+  
+  // State to track backend processing status
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  
+  // State to store the generated video URL from backend
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
 
-  const selectedClip = clips.find((c) => c.id === selectedClipId) || clips[currentClipIndex];
+  /**
+   * Handle file selection from input element
+   * Filters for valid image/video formats only
+   */
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
 
-  useEffect(() => {
-    if (!videoRef.current || !selectedClip) return;
-
-    videoRef.current.src = URL.createObjectURL(selectedClip.file);
-    videoRef.current.currentTime = selectedClip.trimStart;
-
-    return () => {
-      if (videoRef.current) {
-        URL.revokeObjectURL(videoRef.current.src);
-      }
-    };
-  }, [selectedClip]);
-
-  useEffect(() => {
-    if (!videoRef.current) return;
-
-    if (isPlaying) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
-    }
-  }, [isPlaying]);
-
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    setCurrentTime(videoRef.current.currentTime);
-
-    // Apply filters to canvas
-    applyFiltersToCanvas();
-  };
-
-  const applyFiltersToCanvas = () => {
-    if (!videoRef.current || !canvasRef.current || !selectedClip) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-
-    // Draw video frame
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
-    // Apply filters
-    const { brightness, contrast, saturation } = selectedClip.filters;
+    // Convert FileList to Array for easier manipulation
+    const fileArray = Array.from(files);
     
-    if (brightness !== 1 || contrast !== 1 || saturation !== 1) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+    // Filter for valid image/video MIME types
+    const validFiles = fileArray.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      return isImage || isVideo;
+    });
 
-      for (let i = 0; i < data.length; i += 4) {
-        // Apply brightness
-        data[i] *= brightness;
-        data[i + 1] *= brightness;
-        data[i + 2] *= brightness;
-
-        // Apply contrast
-        data[i] = ((data[i] / 255 - 0.5) * contrast + 0.5) * 255;
-        data[i + 1] = ((data[i + 1] / 255 - 0.5) * contrast + 0.5) * 255;
-        data[i + 2] = ((data[i + 2] / 255 - 0.5) * contrast + 0.5) * 255;
-
-        // Apply saturation
-        const gray = 0.2989 * data[i] + 0.5870 * data[i + 1] + 0.1140 * data[i + 2];
-        data[i] = gray + saturation * (data[i] - gray);
-        data[i + 1] = gray + saturation * (data[i + 1] - gray);
-        data[i + 2] = gray + saturation * (data[i + 2] - gray);
-      }
-
-      ctx.putImageData(imageData, 0, 0);
+    // Show error if no valid files selected
+    if (validFiles.length === 0) {
+      toast({
+        title: 'Invalid files',
+        description: 'Please select image or video files only',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    // Draw text overlays
-    const activeOverlays = textOverlays.filter(
-      (overlay) =>
-        currentTime >= overlay.timestamp &&
-        currentTime <= overlay.timestamp + overlay.duration
-    );
-
-    activeOverlays.forEach((overlay) => {
-      ctx.font = `${overlay.style.fontSize}px ${overlay.style.fontFamily}`;
-      ctx.fillStyle = overlay.style.color;
-      ctx.textAlign = 'center';
-      ctx.fillText(
-        overlay.text,
-        overlay.style.position.x * canvas.width,
-        overlay.style.position.y * canvas.height
-      );
+    // Update state with valid files
+    setSelectedFiles(validFiles);
+    toast({
+      title: 'Files selected',
+      description: `${validFiles.length} file(s) ready for upload`,
     });
   };
 
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  /**
+   * Upload files to FastAPI backend and process into reel
+   * POST /upload/ with multipart/form-data
+   */
+  const handleUpload = async () => {
+    // Validate that files are selected
+    if (selectedFiles.length === 0) {
+      toast({
+        title: 'No files selected',
+        description: 'Please select files before uploading',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Set processing state and clear previous video
+    setIsProcessing(true);
+    setGeneratedVideoUrl(null);
+
+    try {
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      
+      // Append all selected files with key "files" (FastAPI expects List[UploadFile])
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      // Construct URL with title as query parameter
+      const uploadUrl = `http://localhost:8000/upload/?title=${encodeURIComponent(title)}`;
+
+      // Send POST request to backend
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+        // Note: Don't set Content-Type header - browser sets it automatically with boundary
+      });
+
+      // Check for HTTP errors
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      // Parse JSON response from backend
+      const data: UploadResponse = await response.json();
+
+      // Construct full video URL from relative path
+      // Backend returns: "/videos/My_Reel.mp4"
+      const videoUrl = `http://localhost:8000${data.output_video}`;
+      setGeneratedVideoUrl(videoUrl);
+
+      // Show success notification
+      toast({
+        title: 'Video generated!',
+        description: `Processed ${data.files_processed} files successfully`,
+      });
+
+    } catch (error) {
+      // Handle errors and show user feedback
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      // Always reset processing state
+      setIsProcessing(false);
+    }
   };
 
-  if (!selectedClip) {
-    return (
-      <Card className="w-full aspect-[9/16] flex items-center justify-center bg-muted">
-        <p className="text-muted-foreground">No clips to preview</p>
-      </Card>
-    );
-  }
+  /**
+   * Reset component to initial state for new upload
+   */
+  const handleReset = () => {
+    setSelectedFiles([]);
+    setGeneratedVideoUrl(null);
+    setTitle('My Reel');
+  };
 
   return (
-    <Card className="relative w-full aspect-[9/16] bg-black overflow-hidden">
-      <video
-        ref={videoRef}
-        className="hidden"
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={() => setIsPlaying(false)}
-      />
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full object-contain"
-      />
-      
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={togglePlayPause}
-          className="rounded-full"
-        >
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </Button>
+    <Card className="w-full max-w-4xl mx-auto p-6 space-y-6 bg-card">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold text-foreground">ReliveAI Video Generator</h2>
+        <p className="text-muted-foreground">
+          Upload your images and videos to create a cinematic reel powered by AI
+        </p>
       </div>
+
+      {/* Upload Interface - shown before video is generated */}
+      {!generatedVideoUrl && (
+        <>
+          {/* Title Input Field */}
+          <div className="space-y-2">
+            <label htmlFor="title-input" className="text-sm font-medium text-foreground">
+              Reel Title (Optional)
+            </label>
+            <Input
+              id="title-input"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="My Reel"
+              disabled={isProcessing}
+              className="bg-background"
+            />
+          </div>
+
+          {/* File Input - accepts multiple files */}
+          <div className="space-y-2">
+            <label htmlFor="file-input" className="text-sm font-medium text-foreground">
+              Select Media Files
+            </label>
+            <Input
+              id="file-input"
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={handleFileSelect}
+              disabled={isProcessing}
+              className="cursor-pointer file:cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Select multiple images or videos (JPG, PNG, MP4, MOV, etc.)
+            </p>
+          </div>
+
+          {/* Selected Files Counter */}
+          {selectedFiles.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-secondary/50 rounded-lg">
+              <Video className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {selectedFiles.length} file(s) selected
+              </span>
+            </div>
+          )}
+
+          {/* Upload Button */}
+          <Button
+            onClick={handleUpload}
+            disabled={isProcessing || selectedFiles.length === 0}
+            className="w-full"
+            size="lg"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                Processing your reel...
+              </>
+            ) : (
+              <>
+                <Upload className="h-5 w-5 mr-2" />
+                Generate Reel
+              </>
+            )}
+          </Button>
+
+          {/* Processing Info */}
+          {isProcessing && (
+            <p className="text-sm text-center text-muted-foreground animate-pulse">
+              This may take a minute. AI is analyzing your media and creating magic ✨
+            </p>
+          )}
+        </>
+      )}
+
+      {/* Video Player - shown after successful generation */}
+      {generatedVideoUrl && (
+        <div className="space-y-4">
+          {/* Video Container - 9:16 aspect ratio for vertical video */}
+          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden max-w-md mx-auto shadow-xl">
+            <video
+              src={generatedVideoUrl}
+              controls
+              autoPlay
+              loop
+              className="w-full h-full object-contain"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button onClick={handleReset} variant="outline" size="lg">
+              Create Another Reel
+            </Button>
+            <Button
+              onClick={() => {
+                // Download video by creating temporary link
+                const link = document.createElement('a');
+                link.href = generatedVideoUrl;
+                link.download = `${title.replace(/\s+/g, '_')}.mp4`;
+                link.click();
+              }}
+              size="lg"
+            >
+              Download Video
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
