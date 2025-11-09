@@ -89,7 +89,7 @@ export const MediaPreviewGallery = ({ files, onRemove }: MediaPreviewGalleryProp
               </Button>
 
               {/* Overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </div>
 
             {/* File Info */}

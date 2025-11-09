@@ -261,10 +261,10 @@ export const Timeline = ({
       })
     : clips;
 
-  // Initialize ordered clips when mockClips changes
-  useState(() => {
+  // Initialize ordered clips when clips prop changes
+  useEffect(() => {
     setOrderedClips(mockClips);
-  });
+  }, [clips]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
