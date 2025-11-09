@@ -156,7 +156,8 @@ const Create = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorText || response.statusText}`);
       }
 
       // Parse JSON response from backend
@@ -167,17 +168,32 @@ const Create = () => {
       setGeneratedVideoUrl(videoUrl);
 
       toast({
-        title: "Video generated!",
-        description: `Processed ${data.files_processed} files successfully`,
+        title: "Video generated successfully!",
+        description: `Processed ${data.files_processed} files`,
       });
 
     } catch (error: any) {
       console.error('Upload error:', error);
-      const errorMessage = error.message || "Failed to create reel. Make sure the backend is running at http://localhost:8000";
-      setProcessingError(errorMessage);
+      
+      // Provide helpful error messages based on error type
+      let errorMessage = "Failed to connect to backend";
+      let errorDetails = "";
+      
+      if (error.message?.includes("Failed to fetch") || error.name === "TypeError") {
+        errorMessage = "Cannot connect to backend server";
+        errorDetails = "Make sure your FastAPI backend is running at http://localhost:8000. If running on Lovable preview, you need to use a tunneling service like ngrok.";
+      } else if (error.message?.includes("500")) {
+        errorMessage = "Backend server error";
+        errorDetails = error.message;
+      } else {
+        errorMessage = error.message || "Unknown error occurred";
+      }
+      
+      setProcessingError(`${errorMessage}\n${errorDetails}`);
+      
       toast({
-        title: "Error creating reel",
-        description: errorMessage,
+        title: errorMessage,
+        description: errorDetails || "Check console for details",
         variant: "destructive",
       });
     } finally {
@@ -527,25 +543,42 @@ const Create = () => {
                 )}
 
                 {processingError && !isProcessing && (
-                  <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
+                  <div className="flex flex-col items-center justify-center py-16 space-y-6 text-center">
                     <div className="rounded-full bg-destructive/20 p-4">
-                      <span className="text-2xl">⚠️</span>
+                      <span className="text-3xl">⚠️</span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2">Something went wrong</h3>
-                      <p className="text-sm text-muted-foreground max-w-md">
+                    <div className="space-y-2 max-w-lg">
+                      <h3 className="font-semibold text-foreground text-lg">Connection Failed</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">
                         {processingError}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setProcessingError(null);
-                        setGeneratedVideoUrl(null);
-                      }}
-                    >
-                      Try Again
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleSubmit}
+                        variant="default"
+                      >
+                        Retry Upload
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setProcessingError(null);
+                          setGeneratedVideoUrl(null);
+                        }}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                    <Card className="bg-muted/30 p-4 text-xs text-left max-w-md border-border/50">
+                      <p className="font-semibold text-foreground mb-2">💡 Troubleshooting:</p>
+                      <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
+                        <li>Start backend: <code className="bg-background px-1.5 py-0.5 rounded text-primary">python main.py</code></li>
+                        <li>Verify backend health at <a href="http://localhost:8000" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">localhost:8000</a></li>
+                        <li>Check CORS is enabled in backend (allow_origins=["*"])</li>
+                        <li>If on Lovable preview URL, use ngrok to expose localhost</li>
+                      </ul>
+                    </Card>
                   </div>
                 )}
 
