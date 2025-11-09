@@ -8,6 +8,8 @@ interface FileUploadItemProps {
   file: File;
   index: number;
   onRemove: (index: number) => void;
+  title?: string; // optional custom title for reel
+  onVideoReady?: (videoUrl: string) => void; // callback when backend returns video path
 }
 
 type ValidationStatus = "validating" | "valid" | "invalid" | "uploading";
@@ -25,7 +27,7 @@ const formatFileSize = (bytes: number): string => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) => {
+export const FileUploadItem = ({ file, index, onRemove, title = "My Reel", onVideoReady }: FileUploadItemProps) => {
   const [validation, setValidation] = useState<ValidationResult>({ status: "validating" });
   const [progress, setProgress] = useState(0);
 
@@ -34,7 +36,6 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
   }, [file]);
 
   const validateFile = async () => {
-    // Validate file type
     const validImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
     const validVideoTypes = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"];
     const isValidType = [...validImageTypes, ...validVideoTypes].includes(file.type);
@@ -48,8 +49,7 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
       return;
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024;
+    const maxSize = 100 * 1024 * 1024; // 100 MB
     if (file.size > maxSize) {
       setValidation({
         status: "invalid",
@@ -68,7 +68,7 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
           size: formatFileSize(file.size),
           duration: `${duration.toFixed(1)}s`,
         });
-      } catch (e) {
+      } catch {
         setValidation({
           status: "valid",
           size: formatFileSize(file.size),
@@ -81,8 +81,10 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
       });
     }
 
-    // Simulate upload progress
-    simulateUpload();
+    // After validation, start uploading
+    if (validation.status === "valid") {
+      uploadFileToBackend(file);
+    }
   };
 
   const getVideoDuration = (file: File): Promise<number> => {
@@ -98,16 +100,38 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
     });
   };
 
-  const simulateUpload = () => {
-    let current = 0;
-    const interval = setInterval(() => {
-      current += Math.random() * 30;
-      if (current >= 100) {
-        current = 100;
-        clearInterval(interval);
+  const uploadFileToBackend = async (file: File) => {
+    setValidation((prev) => ({ ...prev, status: "uploading" }));
+    const formData = new FormData();
+    formData.append("files", file);
+    formData.append("title", title);
+
+    try {
+      const res = await fetch("http://localhost:8000/upload/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Upload failed:", errData);
+        setValidation((prev) => ({ ...prev, status: "invalid", error: "Upload failed" }));
+        return;
       }
-      setProgress(current);
-    }, 200);
+
+      const data = await res.json();
+      console.log("Upload success:", data);
+
+      setProgress(100);
+      setValidation((prev) => ({ ...prev, status: "valid" }));
+
+      if (onVideoReady && data.output_video) {
+        onVideoReady(`http://localhost:8000${data.output_video}`);
+      }
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      setValidation((prev) => ({ ...prev, status: "invalid", error: "Upload error" }));
+    }
   };
 
   const getStatusIcon = () => {
@@ -118,6 +142,8 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "invalid":
         return <AlertCircle className="h-4 w-4 text-destructive" />;
+      case "uploading":
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
       default:
         return null;
     }
@@ -126,11 +152,17 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
   const getStatusBadge = () => {
     switch (validation.status) {
       case "validating":
-        return <Badge variant="outline" className="bg-muted/50">Validating</Badge>;
+        return (
+          <Badge variant="outline" className="bg-muted/50">
+            Validating
+          </Badge>
+        );
       case "valid":
         return <Badge className="bg-green-500/20 text-green-500">Ready</Badge>;
       case "invalid":
         return <Badge variant="destructive">Invalid</Badge>;
+      case "uploading":
+        return <Badge className="bg-blue-500/20 text-blue-500">Uploading</Badge>;
       default:
         return null;
     }
@@ -170,8 +202,8 @@ export const FileUploadItem = ({ file, index, onRemove }: FileUploadItemProps) =
             </div>
           </div>
 
-          {/* Progress bar (only show during upload simulation) */}
-          {validation.status === "validating" && progress < 100 && (
+          {/* Progress bar */}
+          {(validation.status === "uploading" || validation.status === "validating") && (
             <Progress value={progress} className="h-1 mt-2" />
           )}
 
