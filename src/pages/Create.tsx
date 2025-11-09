@@ -13,6 +13,9 @@ import { FileUploadItem } from "@/components/FileUploadItem";
 import { MediaPreviewGallery } from "@/components/MediaPreviewGallery";
 import { TemplateSelector } from "@/components/TemplateSelector";
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
 const Create = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,17 +36,73 @@ const Create = () => {
     setIsDragging(false);
   };
 
+  const validateFile = (file: File): string | null => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `Invalid file type: ${file.name}. Allowed types: JPG, PNG, WEBP, MP4, MOV, WEBM`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large: ${file.name}. Maximum size is 100MB`;
+    }
+    return null;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
-    setFiles(prev => [...prev, ...droppedFiles]);
+    
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+    
+    droppedFiles.forEach(file => {
+      const error = validateFile(file);
+      if (error) {
+        errors.push(error);
+      } else {
+        validFiles.push(file);
+      }
+    });
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Invalid files",
+        description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ''),
+        variant: "destructive",
+      });
+    }
+    
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+    }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...selectedFiles]);
+      
+      const validFiles: File[] = [];
+      const errors: string[] = [];
+      
+      selectedFiles.forEach(file => {
+        const error = validateFile(file);
+        if (error) {
+          errors.push(error);
+        } else {
+          validFiles.push(file);
+        }
+      });
+      
+      if (errors.length > 0) {
+        toast({
+          title: "Invalid files",
+          description: errors[0] + (errors.length > 1 ? ` (and ${errors.length - 1} more)` : ''),
+          variant: "destructive",
+        });
+      }
+      
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles]);
+      }
     }
   };
 
