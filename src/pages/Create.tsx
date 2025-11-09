@@ -26,6 +26,7 @@ const Create = () => {
   const [track, setTrack] = useState("track1");
   const [duration, setDuration] = useState([30]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"template" | "custom">("template");
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -190,13 +191,38 @@ const Create = () => {
           <p className="mt-2 text-muted-foreground">Upload your memories and let AI do the magic</p>
         </div>
 
-        {/* Template Selector */}
+        {/* Mode Selector */}
         <div className="mb-8">
-          <TemplateSelector 
-            onSelectTemplate={handleSelectTemplate}
-            selectedTemplateId={selectedTemplateId}
-          />
+          <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant={mode === "template" ? "default" : "outline"}
+                onClick={() => setMode("template")}
+                className="flex-1"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Use Template
+              </Button>
+              <Button
+                variant={mode === "custom" ? "default" : "outline"}
+                onClick={() => setMode("custom")}
+                className="flex-1"
+              >
+                Customize Settings
+              </Button>
+            </div>
+          </Card>
         </div>
+
+        {/* Template Selector */}
+        {mode === "template" && (
+          <div className="mb-8">
+            <TemplateSelector 
+              onSelectTemplate={handleSelectTemplate}
+              selectedTemplateId={selectedTemplateId}
+            />
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Upload Section */}
@@ -303,11 +329,12 @@ const Create = () => {
 
           {/* Settings Section */}
           <div className="space-y-6">
-            <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
-              <h2 className="mb-6 text-xl font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Style & Settings
-              </h2>
+            {mode === "custom" && (
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+                <h2 className="mb-6 text-xl font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Custom Settings
+                </h2>
 
               {/* Job Name */}
               <div className="mb-6">
@@ -397,6 +424,19 @@ const Create = () => {
                 </p>
               </div>
             </Card>
+            )}
+
+            {mode === "template" && selectedTemplateId && (
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+                <h2 className="mb-4 text-xl font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Template Selected
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Your reel will be created using the selected template's pre-configured mood, music, and duration settings.
+                </p>
+              </Card>
+            )}
 
             <Card className="border-primary/30 bg-gradient-card p-6">
               <div className="mb-4 flex items-start gap-3">
@@ -404,15 +444,22 @@ const Create = () => {
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1">AI Magic</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Smart frame analysis • Beat detection • Auto transitions • Color grading • Professional timing
+                  <h3 className="font-semibold text-foreground mb-1">AI-Powered Processing</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    Our AI will automatically enhance your reel with:
                   </p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Smart frame analysis to pick the best moments</li>
+                    <li>• Beat detection for perfect music sync</li>
+                    <li>• Seamless auto transitions</li>
+                    <li>• Professional color grading</li>
+                    <li>• Optimal timing and pacing</li>
+                  </ul>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span>Processing time: 2-5 minutes</span>
+                <span>Estimated processing time: 2-5 minutes</span>
               </div>
             </Card>
 
@@ -421,7 +468,7 @@ const Create = () => {
               variant="hero" 
               className="w-full text-lg"
               onClick={handleSubmit}
-              disabled={files.length === 0}
+              disabled={files.length === 0 || (mode === "template" && !selectedTemplateId)}
             >
               <Sparkles className="mr-2 h-5 w-5" />
               Create My Reel
