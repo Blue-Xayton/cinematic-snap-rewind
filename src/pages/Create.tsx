@@ -234,6 +234,7 @@ const Create = () => {
               </h2>
               
               <div
+                data-tutorial="upload-area"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}

@@ -27,7 +27,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "Upload Your Media 📸",
     description: "Start by uploading your photos and videos. You can drag & drop or click to browse.",
     route: "/create",
-    target: "input[type='file']",
+    target: "[data-tutorial='upload-area']",
   },
   {
     id: "templates",
@@ -206,11 +206,11 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
 
   return (
     <>
-      {/* Backdrop overlay */}
-      <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm" />
+      {/* Backdrop overlay - less blur, darker */}
+      <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-[2px]" />
       
       {/* Tutorial card */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 pointer-events-none">
         <Card className="w-full max-w-lg p-6 shadow-2xl pointer-events-auto animate-scale-in">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -284,6 +284,16 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
           animation: pulse-highlight 2s infinite;
           box-shadow: 0 0 0 4px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5) !important;
           border-radius: 8px;
+          background-color: hsl(var(--background)) !important;
+        }
+        
+        .tutorial-highlight::before {
+          content: '';
+          position: absolute;
+          inset: -8px;
+          background: hsl(var(--background));
+          border-radius: 12px;
+          z-index: -1;
         }
         
         @keyframes pulse-highlight {
