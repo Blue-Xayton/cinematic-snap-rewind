@@ -134,15 +134,12 @@ const SortableClip = ({
   }, [isTrimmingStart, isTrimmingEnd]);
 
   const trimmedDuration = clip.duration - (clip.trimStart || 0) - (clip.trimEnd || 0);
-  
-  // Calculate dynamic width based on trimmed duration (20px per second, minimum 80px)
-  const clipWidth = Math.max(80, trimmedDuration * 20);
 
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, width: `${clipWidth}px` }}
-      className={`h-20 cursor-move overflow-visible rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
+      style={style}
+      className={`h-20 min-w-[100px] cursor-move overflow-visible rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
         selected ? "border-primary shadow-glow" : "border-border/50"
       }`}
       onClick={onSelect}
