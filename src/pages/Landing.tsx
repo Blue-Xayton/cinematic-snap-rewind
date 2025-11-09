@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Film, Upload, Wand2, Download, Sparkles, Clock, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
 
 const Landing = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,215,0,0.1),transparent_50%)]" />

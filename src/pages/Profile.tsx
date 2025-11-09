@@ -345,17 +345,8 @@ const Profile = () => {
     : "U";
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => navigate("/")}>
-            Back to Dashboard
-          </Button>
-          <Button variant="destructive" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
 
         <Card className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row gap-8">

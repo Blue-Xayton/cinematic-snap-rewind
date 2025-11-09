@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Film, Clock, CheckCircle2, PlayCircle, Plus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Film, Clock, CheckCircle2, PlayCircle, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Job {
   id: string;
@@ -22,6 +33,9 @@ const JobList = () => {
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -44,6 +58,42 @@ const JobList = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation();
+    setJobToDelete(jobId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!jobToDelete) return;
+    
+    setDeletingId(jobToDelete);
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobToDelete);
+
+      if (error) throw error;
+
+      setJobs(jobs.filter(j => j.id !== jobToDelete));
+      toast({
+        title: "Job deleted",
+        description: "The job has been removed successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete job",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteDialogOpen(false);
+      setJobToDelete(null);
     }
   };
 
@@ -75,14 +125,30 @@ const JobList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="aspect-[9/16] w-full" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -115,9 +181,20 @@ const JobList = () => {
             {jobs.map((job) => (
               <Card 
                 key={job.id}
-                className="group cursor-pointer overflow-hidden transition-all hover:shadow-elegant"
+                className="group cursor-pointer overflow-hidden transition-all hover:shadow-elegant relative"
                 onClick={() => navigate(`/jobs/${job.id}`)}
               >
+                {/* Delete Button */}
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => handleDeleteClick(e, job.id)}
+                  disabled={deletingId === job.id}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+
                 {/* Thumbnail */}
                 <div className="relative aspect-[9/16] overflow-hidden bg-gradient-to-br from-secondary to-card">
                   <div className="flex h-full items-center justify-center">
@@ -157,6 +234,23 @@ const JobList = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this job and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -4,10 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Download, Share2, CheckCircle2, Loader2, PlayCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timeline } from "@/components/Timeline";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type JobStatus = "queued" | "ingesting" | "scoring" | "beat_mapping" | "assembling" | "rendering" | "done" | "error";
 
@@ -29,12 +40,15 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [loading, setLoading] = useState(true);
   const [jobName, setJobName] = useState<string>("");
   const [status, setStatus] = useState<JobStatus>("queued");
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [beatThumbnails, setBeatThumbnails] = useState<BeatThumbnail[]>([]);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch job details
   useEffect(() => {
@@ -50,10 +64,36 @@ const JobDetail = () => {
       if (data) {
         setJobName(data.name || `Reel ${jobId.slice(0, 8)}`);
       }
+      setLoading(false);
     };
     
     fetchJob();
   }, [jobId]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Job deleted",
+        description: "The job has been removed successfully",
+      });
+      navigate('/jobs');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete job",
+        variant: "destructive",
+      });
+      setDeleting(false);
+    }
+  };
 
   // Simulate processing pipeline
   useEffect(() => {
@@ -153,8 +193,43 @@ const JobDetail = () => {
     error: "Error",
   };
 
+  if (loading) {
+    return (
+      <div className="bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-10 w-32 mb-4" />
+          <div className="mb-8">
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-6 w-48" />
+          </div>
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <Card className="p-6">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <Skeleton className="h-4 w-full" />
+              </Card>
+              <Card className="p-6">
+                <Skeleton className="aspect-[9/16] w-full max-w-md mx-auto" />
+              </Card>
+            </div>
+            <div>
+              <Card className="p-6">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <div className="space-y-2">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Button 
@@ -171,14 +246,24 @@ const JobDetail = () => {
                 {status === "done" ? "Your reel is ready!" : "Creating your video reel"}
               </p>
             </div>
-            <Badge className={statusColors[status]}>
-              {status === "done" ? (
-                <CheckCircle2 className="mr-1 h-4 w-4" />
-              ) : (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              )}
-              {statusLabels[status]}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={statusColors[status]}>
+                {status === "done" ? (
+                  <CheckCircle2 className="mr-1 h-4 w-4" />
+                ) : (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                )}
+                {statusLabels[status]}
+              </Badge>
+              <Button 
+                variant="destructive" 
+                size="icon"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={deleting}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -286,6 +371,23 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this job and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
