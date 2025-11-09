@@ -63,24 +63,151 @@ const JobDetail = () => {
   const [timelineClips, setTimelineClips] = useState<TimelineClip[]>([]);
   const [hasTimelineChanges, setHasTimelineChanges] = useState(false);
 
-  // Fetch job details
+  // Fetch job details and subscribe to real-time updates
   useEffect(() => {
     const fetchJob = async () => {
       if (!jobId) return;
       
-      const { data, error } = await supabase
+      const { data: jobData, error: jobError } = await supabase
         .from('jobs')
-        .select('name')
+        .select('*')
         .eq('id', jobId)
         .single();
       
-      if (data) {
-        setJobName(data.name || `Reel ${jobId.slice(0, 8)}`);
+      if (jobError) {
+        console.error('Error fetching job:', jobError);
+        setLoading(false);
+        return;
       }
+      
+      if (jobData) {
+        setJobName(jobData.name || `Reel ${jobId.slice(0, 8)}`);
+        setStatus(jobData.status as JobStatus || 'queued');
+        setFinalVideoUrl(jobData.final_video_url);
+        
+        // Calculate progress based on status
+        const statusProgress: Record<string, number> = {
+          'queued': 5,
+          'ingesting': 20,
+          'scoring': 45,
+          'beat_mapping': 60,
+          'assembling': 80,
+          'rendering': 95,
+          'done': 100,
+          'error': 0,
+        };
+        setProgress(statusProgress[jobData.status] || 0);
+      }
+      
+      // Fetch logs
+      const { data: logsData } = await supabase
+        .from('job_logs')
+        .select('*')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
+      
+      if (logsData) {
+        setLogs(logsData.map(log => ({
+          timestamp: new Date(log.created_at).toLocaleTimeString(),
+          level: log.level as "info" | "success" | "error",
+          message: log.message,
+        })));
+      }
+      
+      // Fetch media files for timeline
+      const { data: mediaFiles } = await supabase
+        .from('media_files')
+        .select('*')
+        .eq('job_id', jobId);
+      
+      if (mediaFiles && mediaFiles.length > 0) {
+        const clips: TimelineClip[] = mediaFiles.slice(0, 8).map((file, i) => {
+          const { data: publicUrl } = supabase.storage
+            .from('media')
+            .getPublicUrl(file.file_path);
+          
+          return {
+            id: `clip-${file.id}`,
+            thumbnail: publicUrl.publicUrl,
+            startTime: i * 3.75,
+            duration: 3.75,
+            transition: ["fade", "slide", "zoom", "none"][i % 4] as TimelineClip["transition"],
+          };
+        });
+        setTimelineClips(clips);
+        
+        // Mock beat thumbnails
+        const mockBeats: BeatThumbnail[] = clips.map((clip, i) => ({
+          index: i,
+          beatTime: i * 2.5,
+          thumbnailUrl: clip.thumbnail,
+          clipName: `clip_${i + 1}.mp4`,
+        }));
+        setBeatThumbnails(mockBeats);
+      }
+      
       setLoading(false);
     };
     
     fetchJob();
+    
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`job-${jobId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'jobs',
+          filter: `id=eq.${jobId}`,
+        },
+        (payload) => {
+          console.log('Job update:', payload);
+          const newJob = payload.new as any;
+          if (newJob) {
+            setStatus(newJob.status as JobStatus);
+            setFinalVideoUrl(newJob.final_video_url);
+            
+            const statusProgress: Record<string, number> = {
+              'queued': 5,
+              'ingesting': 20,
+              'scoring': 45,
+              'beat_mapping': 60,
+              'assembling': 80,
+              'rendering': 95,
+              'done': 100,
+              'error': 0,
+            };
+            setProgress(statusProgress[newJob.status] || 0);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'job_logs',
+          filter: `job_id=eq.${jobId}`,
+        },
+        (payload) => {
+          console.log('New log:', payload);
+          const newLog = payload.new as any;
+          if (newLog) {
+            setLogs(prev => [...prev, {
+              timestamp: new Date(newLog.created_at).toLocaleTimeString(),
+              level: newLog.level as "info" | "success" | "error",
+              message: newLog.message,
+            }]);
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [jobId]);
 
   const handleDelete = async () => {
