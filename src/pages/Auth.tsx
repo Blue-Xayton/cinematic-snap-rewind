@@ -11,6 +11,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,9 +30,26 @@ const Auth = () => {
         toast({ title: "Welcome back!" });
         navigate("/");
       } else {
+        if (!displayName.trim()) {
+          toast({
+            title: "Name required",
+            description: "Please enter your name",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const redirectUrl = `${window.location.origin}/`;
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              display_name: displayName.trim(),
+            }
+          }
         });
         if (error) throw error;
         toast({ title: "Account created! Welcome to ReliveAI!" });
@@ -67,6 +85,18 @@ const Auth = () => {
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <Input
+                type="text"
+                placeholder="Your Name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                className="border-primary/20"
+              />
+            </div>
+          )}
           <div>
             <Input
               type="email"
