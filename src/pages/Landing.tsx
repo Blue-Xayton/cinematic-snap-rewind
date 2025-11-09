@@ -377,19 +377,13 @@ const Landing = () => {
               <div className="space-y-4">
                 <Card className="overflow-hidden border-primary/50 shadow-elegant shadow-primary/20 group relative">
                   <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
-                    After AI
+                    After AI ✨
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   <img 
                     src={showcaseAfter1} 
                     alt="Cinematic vacation reel" 
-                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-primary/90 backdrop-blur-sm rounded-full p-4">
-                      <Play className="h-8 w-8 text-primary-foreground" />
-                    </div>
-                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">30-second cinematic reel</p>
@@ -438,19 +432,13 @@ const Landing = () => {
               <div className="space-y-4">
                 <Card className="overflow-hidden border-accent/50 shadow-elegant shadow-accent/20 group relative">
                   <div className="absolute top-4 left-4 z-10 bg-accent/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-accent-foreground border border-accent">
-                    After AI
+                    After AI ✨
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   <img 
                     src={showcaseAfter2} 
                     alt="Cinematic travel reel" 
-                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-accent/90 backdrop-blur-sm rounded-full p-4">
-                      <Play className="h-8 w-8 text-accent-foreground" />
-                    </div>
-                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">Stabilized cinematic journey</p>
@@ -499,19 +487,13 @@ const Landing = () => {
               <div className="space-y-4">
                 <Card className="overflow-hidden border-primary/50 shadow-elegant shadow-primary/20 group relative">
                   <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
-                    After AI
+                    After AI ✨
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   <img 
                     src={showcaseAfter3} 
                     alt="Cinematic celebration reel" 
-                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-primary/90 backdrop-blur-sm rounded-full p-4">
-                      <Play className="h-8 w-8 text-primary-foreground" />
-                    </div>
-                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">Emotional celebration story</p>
@@ -755,19 +737,31 @@ const Landing = () => {
 
             {/* CTA after FAQ */}
             <Card className="mt-16 bg-gradient-card border-border/50 p-8 text-center shadow-elegant">
-              <p className="text-lg text-foreground mb-4">
+              <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
+              <p className="text-xl font-semibold text-foreground mb-2">
                 Still have questions?
               </p>
               <p className="text-muted-foreground mb-6">
-                Our support team is here to help you create amazing reels
+                Try it yourself! Create your first reel for free and see the magic in action.
               </p>
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => navigate('/create')}
-              >
-                Get Started Now
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  variant="hero" 
+                  size="lg"
+                  onClick={() => navigate('/create')}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Create Free Reel
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => navigate('/jobs')}
+                >
+                  <Film className="mr-2 h-4 w-4" />
+                  See More Examples
+                </Button>
+              </div>
             </Card>
           </div>
         </div>
