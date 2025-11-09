@@ -35,6 +35,32 @@ const Profile = () => {
     loadJobCount();
   }, []);
 
+  const ensureProfile = async (userId: string, userCreatedAt: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      const { data: newProfile, error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: userId,
+          created_at: userCreatedAt,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return newProfile;
+    }
+
+    return data;
+  };
+
   const loadProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -43,21 +69,13 @@ const Profile = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-
-      if (data) {
-        setProfile(data);
-        setFormData({
-          display_name: data.display_name || "",
-          bio: data.bio || "",
-        });
-      }
+      const profileData = await ensureProfile(user.id, user.created_at);
+      
+      setProfile(profileData);
+      setFormData({
+        display_name: profileData.display_name || "",
+        bio: profileData.bio || "",
+      });
     } catch (error: any) {
       toast({
         title: "Error loading profile",
@@ -112,6 +130,9 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Ensure profile exists first
+      await ensureProfile(user.id, user.created_at);
+
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${fileExt}`;
 
@@ -127,7 +148,11 @@ const Profile = () => {
 
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .upsert({ 
+          id: user.id,
+          avatar_url: publicUrl,
+          created_at: user.created_at
+        })
         .eq("id", user.id);
 
       if (updateError) throw updateError;
@@ -165,11 +190,16 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Ensure profile exists first
+      await ensureProfile(user.id, user.created_at);
+
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user.id,
           display_name: formData.display_name || null,
           bio: formData.bio || null,
+          created_at: user.created_at,
         })
         .eq("id", user.id);
 
