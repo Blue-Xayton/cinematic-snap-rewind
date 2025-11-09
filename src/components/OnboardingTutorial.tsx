@@ -67,7 +67,10 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
   useEffect(() => {
     const checkTutorialStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setIsVisible(false);
+        return;
+      }
 
       const { data } = await supabase
         .from('user_tutorial_progress')
@@ -78,10 +81,24 @@ export const OnboardingTutorial = ({ onComplete, onSkip }: OnboardingTutorialPro
       // Show tutorial if user hasn't completed it
       if (!data || !data.is_completed) {
         setIsVisible(true);
+      } else {
+        setIsVisible(false);
       }
     };
 
     checkTutorialStatus();
+
+    // Listen for auth state changes to recheck for new users
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        // Small delay to ensure profile is created
+        setTimeout(checkTutorialStatus, 500);
+      } else if (event === 'SIGNED_OUT') {
+        setIsVisible(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Navigate to the route when step changes
