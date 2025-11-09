@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Film, Upload, Wand2, Download, Sparkles, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
@@ -321,6 +322,150 @@ const Landing = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 sm:py-32 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-3xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Everything you need to know about ReliveAI
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="space-y-4">
+              {/* Video Formats */}
+              <AccordionItem value="formats" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  What video and photo formats do you support?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  ReliveAI supports all common formats including MP4, MOV, AVI, WEBM for videos, and JPG, PNG, HEIC, 
+                  WEBP for images. We automatically handle any resolution from smartphone clips to 4K footage. The final 
+                  reel is exported as a high-quality MP4 optimized for social media platforms in vertical (9:16) format, 
+                  perfect for Instagram Reels, TikTok, and YouTube Shorts.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Processing Time */}
+              <AccordionItem value="processing" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  How long does it take to create a reel?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  Most reels are ready in under 30 seconds! Processing time depends on the number and size of files you 
+                  upload. For example, 10-20 photos and short clips typically process in 15-30 seconds. Larger batches 
+                  (50+ files) or longer videos may take 1-2 minutes. Our AI works in real-time, so you'll see progress 
+                  updates throughout the creation process.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* AI Capabilities */}
+              <AccordionItem value="ai-features" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  What exactly does the AI do?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  Our AI performs multiple sophisticated tasks automatically: (1) <strong>Content Analysis</strong> - 
+                  identifies faces, emotions, action, and visual quality in every frame. (2) <strong>Beat Detection</strong> - 
+                  analyzes your music track and detects rhythm patterns. (3) <strong>Smart Editing</strong> - selects the 
+                  best moments and times cuts precisely to music beats. (4) <strong>Cinematic Grading</strong> - applies 
+                  professional color correction, mood enhancement, and film-grade effects. (5) <strong>Scene Flow</strong> - 
+                  creates smooth transitions and ensures narrative coherence. All of this happens automatically with zero 
+                  manual editing required.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Customization */}
+              <AccordionItem value="customization" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  Can I customize the AI's output?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  Yes! While ReliveAI is designed for fully automatic creation, you have control over key aspects. You can 
+                  choose your own music track, select which files to include, and adjust the overall style and mood. Future 
+                  updates will include more granular controls like manual clip reordering, custom transitions, and text 
+                  overlay options. However, the core AI decisions (frame selection, beat-sync, grading) are optimized for 
+                  best results.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Pricing */}
+              <AccordionItem value="pricing" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  How much does ReliveAI cost?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  ReliveAI offers a <strong>free tier</strong> that lets you create your first reels with watermarks to test 
+                  the platform. Our <strong>Pro plan</strong> ($9.99/month) includes unlimited reels, no watermarks, priority 
+                  processing, and access to premium AI features. <strong>Business plans</strong> are available for teams and 
+                  agencies with volume discounts and API access. No credit card is required to start with the free tier—just 
+                  sign up and create your first reel immediately.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Music Copyright */}
+              <AccordionItem value="music" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  What about music copyright?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  You can upload any music track for personal use. However, we recommend using royalty-free music or tracks 
+                  you have rights to if you plan to share your reels publicly on social media. ReliveAI also offers a library 
+                  of licensed, copyright-free music tracks perfect for social media sharing. These tracks are pre-cleared for 
+                  commercial use on platforms like Instagram, TikTok, and YouTube.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Data Privacy */}
+              <AccordionItem value="privacy" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  Is my content private and secure?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  Absolutely. Your photos and videos are encrypted during upload and processing. We never share, sell, or use 
+                  your content for any purpose other than creating your reels. All files are stored securely and automatically 
+                  deleted after 30 days unless you choose to save them in your account. You can delete your content at any time 
+                  from your dashboard. We're GDPR compliant and take data privacy seriously.
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Quality */}
+              <AccordionItem value="quality" className="border border-border/50 rounded-lg px-6 bg-card/30">
+                <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
+                  What quality is the final reel?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">
+                  Final reels are exported in 1080p HD (1920x1080 vertical) at 30fps with high-bitrate encoding optimized 
+                  for social media. Pro users can export in up to 4K resolution (2160x3840). We use advanced compression 
+                  techniques that maintain visual quality while keeping file sizes manageable for easy sharing and fast uploads 
+                  to social platforms.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* CTA after FAQ */}
+            <Card className="mt-16 bg-gradient-card border-border/50 p-8 text-center shadow-elegant">
+              <p className="text-lg text-foreground mb-4">
+                Still have questions?
+              </p>
+              <p className="text-muted-foreground mb-6">
+                Our support team is here to help you create amazing reels
+              </p>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => navigate('/create')}
+              >
+                Get Started Now
+              </Button>
+            </Card>
           </div>
         </div>
       </section>
