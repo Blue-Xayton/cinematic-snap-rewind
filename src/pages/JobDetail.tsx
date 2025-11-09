@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timeline } from "@/components/Timeline";
+import { TransitionSelector } from "@/components/TransitionSelector";
+import { ExportSettings } from "@/components/ExportSettings";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -35,6 +37,14 @@ interface BeatThumbnail {
   clipName: string;
 }
 
+interface TimelineClip {
+  id: string;
+  thumbnail: string;
+  startTime: number;
+  duration: number;
+  transition: "fade" | "slide" | "zoom" | "none";
+}
+
 const JobDetail = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
@@ -49,6 +59,9 @@ const JobDetail = () => {
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [timelineClips, setTimelineClips] = useState<TimelineClip[]>([]);
+  const [hasTimelineChanges, setHasTimelineChanges] = useState(false);
 
   // Fetch job details
   useEffect(() => {
@@ -142,6 +155,16 @@ const JobDetail = () => {
             clipName: `clip_${i + 1}.mp4`,
           }));
           setBeatThumbnails(mockThumbnails);
+          
+          // Initialize timeline clips
+          const clips: TimelineClip[] = mockThumbnails.slice(0, 8).map((t, i) => ({
+            id: `clip-${t.index}`,
+            thumbnail: t.thumbnailUrl,
+            startTime: i * 3.75,
+            duration: 3.75,
+            transition: ["fade", "slide", "zoom", "none"][i % 4] as TimelineClip["transition"],
+          }));
+          setTimelineClips(clips);
         }
 
         // Set final video when done
@@ -210,6 +233,59 @@ const JobDetail = () => {
     } else {
       handleCopyLink();
     }
+  };
+
+  const handleClipSelect = (clipId: string) => {
+    setSelectedClipId(clipId);
+  };
+
+  const handleTransitionChange = (transition: "fade" | "slide" | "zoom" | "none") => {
+    if (!selectedClipId) return;
+    
+    setTimelineClips(prev => 
+      prev.map(clip => 
+        clip.id === selectedClipId 
+          ? { ...clip, transition } 
+          : clip
+      )
+    );
+    setHasTimelineChanges(true);
+    
+    toast({
+      title: "Transition updated",
+      description: `Changed to ${transition} transition. Regenerate to apply changes.`,
+    });
+  };
+
+  const handleClipsReorder = (reorderedClips: TimelineClip[]) => {
+    setTimelineClips(reorderedClips);
+    setHasTimelineChanges(true);
+    
+    toast({
+      title: "Timeline updated",
+      description: "Clip order has been changed. Regenerate to apply changes.",
+    });
+  };
+
+  const handleRegenerate = (settings: any) => {
+    console.log("Regenerating with settings:", settings);
+    console.log("Timeline clips:", timelineClips);
+    
+    toast({
+      title: "Regenerating video",
+      description: "Your video is being regenerated with the new settings...",
+    });
+    
+    setHasTimelineChanges(false);
+    
+    // Here you would call the backend to regenerate
+    // For now, just simulate
+    setTimeout(() => {
+      toast({
+        title: "Video regenerated",
+        description: "Your video has been updated with the new timeline!",
+      });
+    }, 3000);
   };
 
   const statusColors: Record<JobStatus, string> = {
@@ -325,25 +401,49 @@ const JobDetail = () => {
 
             {/* Interactive Timeline */}
             {beatThumbnails.length > 0 && (
-              <Timeline 
-                duration={30} 
-                beats={beatThumbnails.map(t => ({ time: t.beatTime, intensity: 0.8 }))}
-                clips={beatThumbnails.slice(0, 8).map((t, i) => ({
-                  id: `clip-${t.index}`,
-                  thumbnail: t.thumbnailUrl,
-                  startTime: i * 3.75,
-                  duration: 3.75,
-                  transition: ["fade", "slide", "zoom", "none"][i % 4] as "fade" | "slide" | "zoom" | "none",
-                }))}
-                currentTime={progress === 100 ? 30 : (progress / 100) * 30}
-                onClipsReorder={(reorderedClips) => {
-                  console.log("Clips reordered:", reorderedClips);
-                  toast({
-                    title: "Timeline updated",
-                    description: "Clip order has been changed. Re-render to apply changes.",
-                  });
-                }}
-              />
+              <>
+                <Timeline 
+                  duration={30} 
+                  beats={beatThumbnails.map(t => ({ time: t.beatTime, intensity: 0.8 }))}
+                  clips={timelineClips}
+                  currentTime={progress === 100 ? 30 : (progress / 100) * 30}
+                  onClipsReorder={handleClipsReorder}
+                  selectedClipId={selectedClipId}
+                  onClipSelect={handleClipSelect}
+                />
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <TransitionSelector
+                    selectedClipId={selectedClipId}
+                    currentTransition={
+                      timelineClips.find(c => c.id === selectedClipId)?.transition || "none"
+                    }
+                    onTransitionChange={handleTransitionChange}
+                  />
+                  
+                  <Card className="p-6 bg-card/50 backdrop-blur-sm">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-foreground">Regenerate</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Apply your timeline changes and export
+                      </p>
+                    </div>
+                    
+                    {hasTimelineChanges && (
+                      <div className="mb-4 rounded-lg bg-accent/10 border border-accent/30 p-3">
+                        <p className="text-sm text-accent">
+                          ⚠️ You have unsaved timeline changes
+                        </p>
+                      </div>
+                    )}
+                    
+                    <ExportSettings 
+                      onRegenerate={handleRegenerate}
+                      disabled={status !== "done"}
+                    />
+                  </Card>
+                </div>
+              </>
             )}
 
             {/* Video Player */}

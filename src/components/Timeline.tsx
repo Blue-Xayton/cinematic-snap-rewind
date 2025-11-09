@@ -43,6 +43,8 @@ interface TimelineProps {
   currentTime?: number;
   onClipsReorder?: (clips: TimelineClip[]) => void;
   onClipTrim?: (clipId: string, trimStart: number, trimEnd: number) => void;
+  selectedClipId?: string | null;
+  onClipSelect?: (clipId: string) => void;
 }
 
 interface SortableClipProps {
@@ -221,10 +223,11 @@ export const Timeline = ({
   clips = [], 
   currentTime = 0,
   onClipsReorder,
-  onClipTrim 
+  onClipTrim,
+  selectedClipId,
+  onClipSelect
 }: TimelineProps) => {
   const [hoveredBeat, setHoveredBeat] = useState<number | null>(null);
-  const [selectedClip, setSelectedClip] = useState<string | null>(null);
   const [orderedClips, setOrderedClips] = useState<TimelineClip[]>([]);
 
   const sensors = useSensors(
@@ -435,8 +438,8 @@ export const Timeline = ({
                     key={clip.id}
                     clip={clip}
                     index={i}
-                    selected={selectedClip === clip.id}
-                    onSelect={() => setSelectedClip(clip.id)}
+                    selected={selectedClipId === clip.id}
+                    onSelect={() => onClipSelect?.(clip.id)}
                     getTransitionIcon={getTransitionIcon}
                     getTransitionColor={getTransitionColor}
                     onTrimStart={(delta) => handleClipTrim(clip.id, 'start', delta)}
