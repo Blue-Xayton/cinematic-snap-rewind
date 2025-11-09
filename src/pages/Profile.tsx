@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, User, LogOut, Film } from "lucide-react";
+import { Loader2, Upload, User, LogOut, Film, Trash2, Lock } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -15,18 +16,36 @@ const profileSchema = z.object({
   bio: z.string().trim().max(500, "Bio must be less than 500 characters").optional(),
 });
 
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [jobCount, setJobCount] = useState(0);
   const [formData, setFormData] = useState({
     display_name: "",
     bio: "",
   });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -103,7 +122,7 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -119,7 +138,7 @@ const Profile = () => {
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Avatar must be less than 2MB",
+        description: "Profile picture must be less than 2MB",
         variant: "destructive",
       });
       return;
@@ -134,11 +153,18 @@ const Profile = () => {
       await ensureProfile(user.id, user.created_at);
 
       const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      const timestamp = Date.now();
+      const filePath = `${user.id}/profile-picture-${timestamp}.${fileExt}`;
+
+      // Remove old profile picture if exists
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').slice(-2).join('/');
+        await supabase.storage.from("media").remove([oldPath]);
+      }
 
       const { error: uploadError } = await supabase.storage
         .from("media")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
@@ -158,15 +184,46 @@ const Profile = () => {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: publicUrl });
-      toast({ title: "Avatar updated successfully!" });
+      toast({ title: "Profile picture updated successfully!" });
     } catch (error: any) {
       toast({
-        title: "Error uploading avatar",
+        title: "Error uploading profile picture",
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    setRemoving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').slice(-2).join('/');
+        await supabase.storage.from("media").remove([oldPath]);
+      }
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, avatar_url: null });
+      toast({ title: "Profile picture removed successfully!" });
+    } catch (error: any) {
+      toast({
+        title: "Error removing profile picture",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -219,6 +276,62 @@ const Profile = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    setPasswordErrors({});
+    
+    const validation = passwordSchema.safeParse(passwordData);
+    if (!validation.success) {
+      const newErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          newErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setPasswordErrors(newErrors);
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      // Verify current password by attempting to sign in
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("No user email found");
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        setPasswordErrors({ currentPassword: "Current password is incorrect" });
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordData.newPassword,
+      });
+
+      if (updateError) throw updateError;
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setChangingPassword(false);
+      toast({ title: "Password changed successfully!" });
+    } catch (error: any) {
+      toast({
+        title: "Error changing password",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -258,25 +371,43 @@ const Profile = () => {
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                <Button variant="outline" size="sm" disabled={uploading} asChild>
-                  <span>
-                    {uploading ? (
+              <div className="flex flex-col gap-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  <Button variant="outline" size="sm" disabled={uploading} asChild>
+                    <span>
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      Upload Picture
+                    </span>
+                  </Button>
+                </label>
+                {profile?.avatar_url && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleRemoveProfilePicture}
+                    disabled={removing}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    {removing ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-4 w-4 mr-2" />
                     )}
-                    Upload Avatar
-                  </span>
-                </Button>
-              </label>
+                    Remove Picture
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 space-y-6">
@@ -389,6 +520,102 @@ const Profile = () => {
                 </div>
               )}
             </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 md:p-8">
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Lock className="h-5 w-5 text-primary" />
+                <h2 className="text-2xl font-bold">Security</h2>
+              </div>
+              <p className="text-muted-foreground">
+                Manage your password and account security
+              </p>
+            </div>
+
+            <Separator />
+
+            {changingPassword ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Current Password</label>
+                  <Input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                    }
+                    placeholder="Enter your current password"
+                    className="mt-1.5"
+                  />
+                  {passwordErrors.currentPassword && (
+                    <p className="text-sm text-destructive mt-1">{passwordErrors.currentPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">New Password</label>
+                  <Input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, newPassword: e.target.value })
+                    }
+                    placeholder="Enter your new password"
+                    className="mt-1.5"
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-destructive mt-1">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Confirm New Password</label>
+                  <Input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                    }
+                    placeholder="Confirm your new password"
+                    className="mt-1.5"
+                  />
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-sm text-destructive mt-1">{passwordErrors.confirmPassword}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={handleChangePassword} disabled={updatingPassword}>
+                    {updatingPassword && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Update Password
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setChangingPassword(false);
+                      setPasswordData({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                      setPasswordErrors({});
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Button onClick={() => setChangingPassword(true)}>
+                  <Lock className="h-4 w-4 mr-2" />
+                  Change Password
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
