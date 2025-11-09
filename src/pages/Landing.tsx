@@ -372,13 +372,30 @@ const Landing = () => {
                   What exactly does the AI do?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Our AI performs multiple sophisticated tasks automatically: (1) <strong>Content Analysis</strong> - 
-                  identifies faces, emotions, action, and visual quality in every frame. (2) <strong>Beat Detection</strong> - 
-                  analyzes your music track and detects rhythm patterns. (3) <strong>Smart Editing</strong> - selects the 
-                  best moments and times cuts precisely to music beats. (4) <strong>Cinematic Grading</strong> - applies 
-                  professional color correction, mood enhancement, and film-grade effects. (5) <strong>Scene Flow</strong> - 
-                  creates smooth transitions and ensures narrative coherence. All of this happens automatically with zero 
-                  manual editing required.
+                  <p className="mb-4">Our AI performs multiple sophisticated tasks automatically:</p>
+                  <ul className="space-y-3 mb-4">
+                    <li className="flex gap-3">
+                      <span className="font-semibold text-foreground flex-shrink-0">1.</span>
+                      <span><strong className="text-foreground">Content Analysis</strong> - Identifies faces, emotions, action, and visual quality in every frame.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="font-semibold text-foreground flex-shrink-0">2.</span>
+                      <span><strong className="text-foreground">Beat Detection</strong> - Analyzes your music track and detects rhythm patterns.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="font-semibold text-foreground flex-shrink-0">3.</span>
+                      <span><strong className="text-foreground">Smart Editing</strong> - Selects the best moments and times cuts precisely to music beats.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="font-semibold text-foreground flex-shrink-0">4.</span>
+                      <span><strong className="text-foreground">Cinematic Grading</strong> - Applies professional color correction, mood enhancement, and film-grade effects.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="font-semibold text-foreground flex-shrink-0">5.</span>
+                      <span><strong className="text-foreground">Scene Flow</strong> - Creates smooth transitions and ensures narrative coherence.</span>
+                    </li>
+                  </ul>
+                  <p>All of this happens automatically with zero manual editing required.</p>
                 </AccordionContent>
               </AccordionItem>
 
