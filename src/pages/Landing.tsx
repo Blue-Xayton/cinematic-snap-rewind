@@ -55,58 +55,122 @@ const Landing = () => {
         
         {/* Content */}
         <div className="container relative z-10 mx-auto px-4 py-24 sm:py-40">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm px-5 py-2.5 text-sm font-medium text-primary shadow-glow">
-              <Sparkles className="h-4 w-4" />
-              <span>Transform Memories Into Cinematic Stories</span>
-            </div>
-            
-            <h1 className="mb-8 text-6xl font-bold tracking-tight text-foreground sm:text-8xl leading-tight">
-              Your Memories,
-              <span className="block bg-gradient-accent bg-clip-text text-transparent mt-2">
-                Cinematically Reborn
-              </span>
-            </h1>
-            
-            <p className="mb-12 text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Upload your everyday photos and videos. ReliveAI's advanced AI transforms them into stunning, 
-              beat-synced cinematic reels in seconds.
-            </p>
-            
-            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center sm:gap-6">
-              <Button 
-                size="lg" 
-                variant="hero"
-                className="text-lg h-14 px-8"
-                onClick={() => navigate('/create')}
-              >
-                <Upload className="mr-2 h-5 w-5" />
-                Start Creating Free
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="text-lg h-14 px-8 border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card"
-                onClick={() => navigate('/jobs')}
-              >
-                <Film className="mr-2 h-5 w-5" />
-                See Examples
-              </Button>
-            </div>
+          <div className="mx-auto max-w-6xl">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left: Text Content */}
+              <div className="text-center lg:text-left">
+                <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm px-5 py-2.5 text-sm font-medium text-primary shadow-glow">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Transform Memories Into Cinematic Stories</span>
+                </div>
+                
+                <h1 className="mb-8 text-5xl font-bold tracking-tight text-foreground sm:text-7xl leading-tight">
+                  Your Memories,
+                  <span className="block bg-gradient-accent bg-clip-text text-transparent mt-2">
+                    Cinematically Reborn
+                  </span>
+                </h1>
+                
+                <p className="mb-12 text-lg sm:text-xl text-muted-foreground leading-relaxed">
+                  Upload your everyday photos and videos. ReliveAI's advanced AI transforms them into stunning, 
+                  beat-synced cinematic reels in seconds.
+                </p>
+                
+                <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center sm:gap-6">
+                  <Button 
+                    size="lg" 
+                    variant="hero"
+                    className="text-lg h-14 px-8"
+                    onClick={() => navigate('/create')}
+                  >
+                    <Upload className="mr-2 h-5 w-5" />
+                    Start Creating Free
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="text-lg h-14 px-8 border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card"
+                    onClick={() => navigate('/jobs')}
+                  >
+                    <Film className="mr-2 h-5 w-5" />
+                    See Examples
+                  </Button>
+                </div>
 
-            {/* Social Proof */}
-            <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-                <span>No editing skills required</span>
+                {/* Social Proof */}
+                <div className="mt-12 flex flex-wrap items-center lg:justify-start justify-center gap-8 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span>No editing skills required</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span>Ready in 30 seconds</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span>Free to start</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-                <span>Ready in 30 seconds</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-                <span>Free to start</span>
+
+              {/* Right: Demo Video Player */}
+              <div className="relative">
+                <Card className="overflow-hidden border-primary/50 shadow-elegant shadow-primary/20 bg-card/50 backdrop-blur-sm">
+                  <div className="p-4 border-b border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-2">Live Demo</span>
+                    </div>
+                    <p className="text-sm text-foreground font-medium">
+                      Watch: Raw Photos → Cinematic Reel
+                    </p>
+                  </div>
+                  
+                  <div className="relative aspect-[9/16] bg-background">
+                    <video 
+                      src="/videos/demo-transformation.mp4"
+                      poster={showcaseAfter1}
+                      className="w-full h-full object-cover"
+                      controls
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                    <div className="absolute bottom-4 left-4 right-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border/50">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">AI Processing</span>
+                        <span className="text-primary font-semibold">28 seconds</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Floating Stats */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="absolute -bottom-6 -left-6 bg-card border border-border rounded-xl p-4 shadow-elegant"
+                >
+                  <p className="text-2xl font-bold text-primary">10,000+</p>
+                  <p className="text-sm text-muted-foreground">Reels Created</p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="absolute -top-6 -right-6 bg-card border border-border rounded-xl p-4 shadow-elegant"
+                >
+                  <p className="text-2xl font-bold text-accent">4.9★</p>
+                  <p className="text-sm text-muted-foreground">User Rating</p>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -778,7 +842,7 @@ const Landing = () => {
                 Our support team is ready to help you get started. Drop us a message and we'll respond within 24 hours.
               </p>
               
-              <div className="max-w-md mx-auto mb-8">
+              <div className="max-w-md mx-auto">
                 <div className="flex gap-3">
                   <input
                     type="email"
@@ -796,25 +860,6 @@ const Landing = () => {
                     Contact Support
                   </Button>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => navigate('/create')}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Or Try It Free
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => navigate('/jobs')}
-                >
-                  <Film className="mr-2 h-4 w-4" />
-                  View Examples
-                </Button>
               </div>
             </Card>
           </div>
