@@ -1,12 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Film, Upload, Wand2, Download, Sparkles, Zap, CheckCircle2, ArrowRight } from "lucide-react";
+import { Film, Upload, Wand2, Download, Sparkles, Zap, CheckCircle2, ArrowRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import heroImage from "@/assets/hero-image.jpg";
 import featureAiEditing from "@/assets/feature-ai-editing.jpg";
 import featureSmartSelection from "@/assets/feature-smart-selection.jpg";
 import featureCinematic from "@/assets/feature-cinematic.jpg";
+import showcaseBefore1 from "@/assets/showcase-before-1.jpg";
+import showcaseAfter1 from "@/assets/showcase-after-1.jpg";
+import showcaseBefore2 from "@/assets/showcase-before-2.jpg";
+import showcaseAfter2 from "@/assets/showcase-after-2.jpg";
+import showcaseBefore3 from "@/assets/showcase-before-3.jpg";
+import showcaseAfter3 from "@/assets/showcase-after-3.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -326,6 +333,221 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Video Showcase Gallery */}
+      <section className="py-20 sm:py-32 bg-card/20 border-y border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
+              <Play className="h-4 w-4" />
+              <span>See the Transformation</span>
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
+              From Everyday Photos to Cinematic Magic
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Real reels created by ReliveAI. Watch how our AI transforms raw memories into stunning cinematic stories.
+            </p>
+          </div>
+
+          <div className="mx-auto max-w-6xl space-y-16">
+            {/* Example 1: Vacation Memories */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="grid md:grid-cols-2 gap-8 items-start"
+            >
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-border/50 shadow-elegant group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-foreground border border-border/50">
+                    Before
+                  </div>
+                  <img 
+                    src={showcaseBefore1} 
+                    alt="Raw vacation photos" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </Card>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">45 random vacation snapshots</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-primary/50 shadow-elegant shadow-primary/20 group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
+                    After AI
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <img 
+                    src={showcaseAfter1} 
+                    alt="Cinematic vacation reel" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-primary/90 backdrop-blur-sm rounded-full p-4">
+                      <Play className="h-8 w-8 text-primary-foreground" />
+                    </div>
+                  </div>
+                </Card>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-foreground font-medium">30-second cinematic reel</p>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Beat-synced
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Color graded
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Auto-edited
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Example 2: Travel Adventure */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="grid md:grid-cols-2 gap-8 items-start"
+            >
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-border/50 shadow-elegant group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-foreground border border-border/50">
+                    Before
+                  </div>
+                  <img 
+                    src={showcaseBefore2} 
+                    alt="Raw travel footage" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </Card>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Shaky phone videos & tourist shots</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-accent/50 shadow-elegant shadow-accent/20 group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-accent/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-accent-foreground border border-accent">
+                    After AI
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <img 
+                    src={showcaseAfter2} 
+                    alt="Cinematic travel reel" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-accent/90 backdrop-blur-sm rounded-full p-4">
+                      <Play className="h-8 w-8 text-accent-foreground" />
+                    </div>
+                  </div>
+                </Card>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-foreground font-medium">Stabilized cinematic journey</p>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-accent" />
+                      Golden hour tones
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-accent" />
+                      Smooth flow
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-accent" />
+                      Pro editing
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Example 3: Celebration */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="grid md:grid-cols-2 gap-8 items-start"
+            >
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-border/50 shadow-elegant group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-foreground border border-border/50">
+                    Before
+                  </div>
+                  <img 
+                    src={showcaseBefore3} 
+                    alt="Raw celebration footage" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </Card>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Unedited birthday party clips</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Card className="overflow-hidden border-primary/50 shadow-elegant shadow-primary/20 group relative">
+                  <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
+                    After AI
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <img 
+                    src={showcaseAfter3} 
+                    alt="Cinematic celebration reel" 
+                    className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-primary/90 backdrop-blur-sm rounded-full p-4">
+                      <Play className="h-8 w-8 text-primary-foreground" />
+                    </div>
+                  </div>
+                </Card>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-foreground font-medium">Emotional celebration story</p>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Best moments
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Vibrant colors
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      Perfect timing
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-16">
+            <Button 
+              size="lg" 
+              variant="hero"
+              onClick={() => navigate('/create')}
+            >
+              <Upload className="mr-2 h-5 w-5" />
+              Create Your Own Reel
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="py-20 sm:py-32 border-t border-border">
         <div className="container mx-auto px-4">
@@ -345,11 +567,19 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   What video and photo formats do you support?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  ReliveAI supports all common formats including MP4, MOV, AVI, WEBM for videos, and JPG, PNG, HEIC, 
-                  WEBP for images. We automatically handle any resolution from smartphone clips to 4K footage. The final 
-                  reel is exported as a high-quality MP4 optimized for social media platforms in vertical (9:16) format, 
-                  perfect for Instagram Reels, TikTok, and YouTube Shorts.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    ReliveAI supports all common formats including MP4, MOV, AVI, WEBM for videos, and JPG, PNG, HEIC, 
+                    WEBP for images. We automatically handle any resolution from smartphone clips to 4K footage. The final 
+                    reel is exported as a high-quality MP4 optimized for social media platforms in vertical (9:16) format, 
+                    perfect for Instagram Reels, TikTok, and YouTube Shorts.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -358,11 +588,19 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   How long does it take to create a reel?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Most reels are ready in under 30 seconds! Processing time depends on the number and size of files you 
-                  upload. For example, 10-20 photos and short clips typically process in 15-30 seconds. Larger batches 
-                  (50+ files) or longer videos may take 1-2 minutes. Our AI works in real-time, so you'll see progress 
-                  updates throughout the creation process.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    Most reels are ready in under 30 seconds! Processing time depends on the number and size of files you 
+                    upload. For example, 10-20 photos and short clips typically process in 15-30 seconds. Larger batches 
+                    (50+ files) or longer videos may take 1-2 minutes. Our AI works in real-time, so you'll see progress 
+                    updates throughout the creation process.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -371,31 +609,39 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   What exactly does the AI do?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  <p className="mb-4">Our AI performs multiple sophisticated tasks automatically:</p>
-                  <ul className="space-y-3 mb-4">
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-foreground flex-shrink-0">1.</span>
-                      <span><strong className="text-foreground">Content Analysis</strong> - Identifies faces, emotions, action, and visual quality in every frame.</span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-foreground flex-shrink-0">2.</span>
-                      <span><strong className="text-foreground">Beat Detection</strong> - Analyzes your music track and detects rhythm patterns.</span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-foreground flex-shrink-0">3.</span>
-                      <span><strong className="text-foreground">Smart Editing</strong> - Selects the best moments and times cuts precisely to music beats.</span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-foreground flex-shrink-0">4.</span>
-                      <span><strong className="text-foreground">Cinematic Grading</strong> - Applies professional color correction, mood enhancement, and film-grade effects.</span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-foreground flex-shrink-0">5.</span>
-                      <span><strong className="text-foreground">Scene Flow</strong> - Creates smooth transitions and ensures narrative coherence.</span>
-                    </li>
-                  </ul>
-                  <p>All of this happens automatically with zero manual editing required.</p>
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    <p className="mb-4">Our AI performs multiple sophisticated tasks automatically:</p>
+                    <ul className="space-y-3 mb-4">
+                      <li className="flex gap-3">
+                        <span className="font-semibold text-foreground flex-shrink-0">1.</span>
+                        <span><strong className="text-foreground">Content Analysis</strong> - Identifies faces, emotions, action, and visual quality in every frame.</span>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="font-semibold text-foreground flex-shrink-0">2.</span>
+                        <span><strong className="text-foreground">Beat Detection</strong> - Analyzes your music track and detects rhythm patterns.</span>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="font-semibold text-foreground flex-shrink-0">3.</span>
+                        <span><strong className="text-foreground">Smart Editing</strong> - Selects the best moments and times cuts precisely to music beats.</span>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="font-semibold text-foreground flex-shrink-0">4.</span>
+                        <span><strong className="text-foreground">Cinematic Grading</strong> - Applies professional color correction, mood enhancement, and film-grade effects.</span>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="font-semibold text-foreground flex-shrink-0">5.</span>
+                        <span><strong className="text-foreground">Scene Flow</strong> - Creates smooth transitions and ensures narrative coherence.</span>
+                      </li>
+                    </ul>
+                    <p>All of this happens automatically with zero manual editing required.</p>
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -404,12 +650,20 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   Can I customize the AI's output?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Yes! While ReliveAI is designed for fully automatic creation, you have control over key aspects. You can 
-                  choose your own music track, select which files to include, and adjust the overall style and mood. Future 
-                  updates will include more granular controls like manual clip reordering, custom transitions, and text 
-                  overlay options. However, the core AI decisions (frame selection, beat-sync, grading) are optimized for 
-                  best results.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    Yes! While ReliveAI is designed for fully automatic creation, you have control over key aspects. You can 
+                    choose your own music track, select which files to include, and adjust the overall style and mood. Future 
+                    updates will include more granular controls like manual clip reordering, custom transitions, and text 
+                    overlay options. However, the core AI decisions (frame selection, beat-sync, grading) are optimized for 
+                    best results.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -418,12 +672,20 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   How much does ReliveAI cost?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  ReliveAI offers a <strong>free tier</strong> that lets you create your first reels with watermarks to test 
-                  the platform. Our <strong>Pro plan</strong> ($9.99/month) includes unlimited reels, no watermarks, priority 
-                  processing, and access to premium AI features. <strong>Business plans</strong> are available for teams and 
-                  agencies with volume discounts and API access. No credit card is required to start with the free tier—just 
-                  sign up and create your first reel immediately.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    ReliveAI offers a <strong>free tier</strong> that lets you create your first reels with watermarks to test 
+                    the platform. Our <strong>Pro plan</strong> ($9.99/month) includes unlimited reels, no watermarks, priority 
+                    processing, and access to premium AI features. <strong>Business plans</strong> are available for teams and 
+                    agencies with volume discounts and API access. No credit card is required to start with the free tier—just 
+                    sign up and create your first reel immediately.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -432,11 +694,19 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   What about music copyright?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  You can upload any music track for personal use. However, we recommend using royalty-free music or tracks 
-                  you have rights to if you plan to share your reels publicly on social media. ReliveAI also offers a library 
-                  of licensed, copyright-free music tracks perfect for social media sharing. These tracks are pre-cleared for 
-                  commercial use on platforms like Instagram, TikTok, and YouTube.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    You can upload any music track for personal use. However, we recommend using royalty-free music or tracks 
+                    you have rights to if you plan to share your reels publicly on social media. ReliveAI also offers a library 
+                    of licensed, copyright-free music tracks perfect for social media sharing. These tracks are pre-cleared for 
+                    commercial use on platforms like Instagram, TikTok, and YouTube.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -445,11 +715,19 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   Is my content private and secure?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Absolutely. Your photos and videos are encrypted during upload and processing. We never share, sell, or use 
-                  your content for any purpose other than creating your reels. All files are stored securely and automatically 
-                  deleted after 30 days unless you choose to save them in your account. You can delete your content at any time 
-                  from your dashboard. We're GDPR compliant and take data privacy seriously.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    Absolutely. Your photos and videos are encrypted during upload and processing. We never share, sell, or use 
+                    your content for any purpose other than creating your reels. All files are stored securely and automatically 
+                    deleted after 30 days unless you choose to save them in your account. You can delete your content at any time 
+                    from your dashboard. We're GDPR compliant and take data privacy seriously.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -458,11 +736,19 @@ const Landing = () => {
                 <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary hover:no-underline">
                   What quality is the final reel?
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Final reels are exported in 1080p HD (1920x1080 vertical) at 30fps with high-bitrate encoding optimized 
-                  for social media. Pro users can export in up to 4K resolution (2160x3840). We use advanced compression 
-                  techniques that maintain visual quality while keeping file sizes manageable for easy sharing and fast uploads 
-                  to social platforms.
+                <AccordionContent asChild>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-muted-foreground leading-relaxed"
+                  >
+                    Final reels are exported in 1080p HD (1920x1080 vertical) at 30fps with high-bitrate encoding optimized 
+                    for social media. Pro users can export in up to 4K resolution (2160x3840). We use advanced compression 
+                    techniques that maintain visual quality while keeping file sizes manageable for easy sharing and fast uploads 
+                    to social platforms.
+                  </motion.div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
