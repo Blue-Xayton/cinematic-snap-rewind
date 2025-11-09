@@ -10,6 +10,7 @@ import { Upload, Sparkles, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { FileUploadItem } from "@/components/FileUploadItem";
+import { MediaPreviewGallery } from "@/components/MediaPreviewGallery";
 
 const Create = () => {
   const navigate = useNavigate();
@@ -179,6 +180,16 @@ const Create = () => {
                       />
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Media Preview Gallery */}
+              {files.length > 0 && (
+                <div className="mt-6">
+                  <MediaPreviewGallery 
+                    files={files}
+                    onRemove={removeFile}
+                  />
                 </div>
               )}
 

@@ -7,6 +7,7 @@ import { Film, Clock, CheckCircle2, PlayCircle, Plus, Trash2 } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { JobFilters } from "@/components/JobFilters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,11 @@ const JobList = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [moodFilter, setMoodFilter] = useState("all");
 
   useEffect(() => {
     fetchJobs();
@@ -123,6 +129,14 @@ const JobList = () => {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  // Filter jobs based on search and filters
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch = job.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || job.status === statusFilter;
+    const matchesMood = moodFilter === "all" || job.mood === moodFilter;
+    return matchesSearch && matchesStatus && matchesMood;
+  });
+
   if (loading) {
     return (
       <div className="bg-background">
@@ -164,7 +178,41 @@ const JobList = () => {
           </Button>
         </div>
 
-        {jobs.length === 0 ? (
+        {/* Filters */}
+        {jobs.length > 0 && (
+          <div className="mb-6">
+            <JobFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              moodFilter={moodFilter}
+              onMoodFilterChange={setMoodFilter}
+              totalCount={jobs.length}
+              filteredCount={filteredJobs.length}
+            />
+          </div>
+        )}
+
+        {filteredJobs.length === 0 && jobs.length > 0 ? (
+          <Card className="p-12 text-center">
+            <Film className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+            <h2 className="mb-2 text-2xl font-semibold text-foreground">No matching reels</h2>
+            <p className="mb-6 text-muted-foreground">
+              Try adjusting your filters or search query
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+                setMoodFilter("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </Card>
+        ) : jobs.length === 0 ? (
           <Card className="p-12 text-center">
             <Film className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
             <h2 className="mb-2 text-2xl font-semibold text-foreground">No reels yet</h2>
@@ -178,7 +226,7 @@ const JobList = () => {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <Card 
                 key={job.id}
                 className="group cursor-pointer overflow-hidden transition-all hover:shadow-elegant relative"

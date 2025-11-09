@@ -158,17 +158,58 @@ const JobDetail = () => {
   }, []);
 
   const handleDownload = () => {
-    toast({
-      title: "Download started",
-      description: "Your video is being downloaded",
-    });
+    if (finalVideoUrl) {
+      const link = document.createElement('a');
+      link.href = finalVideoUrl;
+      link.download = `${jobName.replace(/\s+/g, '_')}.mp4`;
+      link.click();
+      toast({
+        title: "Download started",
+        description: "Your video is being downloaded",
+      });
+    }
   };
 
-  const handleShare = () => {
-    toast({
-      title: "Share link copied",
-      description: "Link copied to clipboard",
-    });
+  const handleCopyLink = async () => {
+    const shareUrl = `${window.location.origin}/jobs/${jobId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied!",
+        description: "Share link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareVideo = async () => {
+    if (!finalVideoUrl) return;
+    
+    const shareUrl = `${window.location.origin}/jobs/${jobId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: jobName,
+          text: `Check out my video reel: ${jobName}`,
+          url: shareUrl,
+        });
+        toast({
+          title: "Shared successfully",
+        });
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Share failed:', error);
+        }
+      }
+    } else {
+      handleCopyLink();
+    }
   };
 
   const statusColors: Record<JobStatus, string> = {
@@ -329,7 +370,7 @@ const JobDetail = () => {
                   </Button>
                   <Button 
                     variant="outline"
-                    onClick={handleShare}
+                    onClick={handleShareVideo}
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
