@@ -149,14 +149,12 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Ensure profile exists first
       await ensureProfile(user.id, user.created_at);
 
       const fileExt = file.name.split(".").pop();
       const timestamp = Date.now();
       const filePath = `${user.id}/profile-picture-${timestamp}.${fileExt}`;
 
-      // Remove old profile picture if exists
       if (profile?.avatar_url) {
         const oldPath = profile.avatar_url.split('/').slice(-2).join('/');
         await supabase.storage.from("media").remove([oldPath]);
@@ -247,7 +245,6 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Ensure profile exists first
       await ensureProfile(user.id, user.created_at);
 
       const { error } = await supabase
@@ -293,7 +290,6 @@ const Profile = () => {
 
     setUpdatingPassword(true);
     try {
-      // Verify current password by attempting to sign in
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) throw new Error("No user email found");
 
@@ -307,7 +303,6 @@ const Profile = () => {
         return;
       }
 
-      // Update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: passwordData.newPassword,
       });
