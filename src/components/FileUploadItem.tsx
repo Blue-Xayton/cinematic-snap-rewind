@@ -107,7 +107,7 @@ export const FileUploadItem = ({ file, index, onRemove, title = "My Reel", onVid
     formData.append("title", title);
 
     try {
-      const res = await fetch("http://localhost:8000/upload/", {
+      const res = await fetch("https://sporular-georgiana-anacoluthically.ngrok-free.dev/upload/", {
         method: "POST",
         body: formData,
       });
@@ -126,7 +126,7 @@ export const FileUploadItem = ({ file, index, onRemove, title = "My Reel", onVid
       setValidation((prev) => ({ ...prev, status: "valid" }));
 
       if (onVideoReady && data.output_video) {
-        onVideoReady(`http://localhost:8000${data.output_video}`);
+        onVideoReady(`https://sporular-georgiana-anacoluthically.ngrok-free.dev${data.output_video}`);
       }
     } catch (err) {
       console.error("Error uploading file:", err);
