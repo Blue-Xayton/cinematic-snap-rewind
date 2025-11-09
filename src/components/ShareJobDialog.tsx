@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,13 @@ export const ShareJobDialog = ({ open, onOpenChange, jobId, jobName, isOwner }: 
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch shared users when dialog opens
+  useEffect(() => {
+    if (open && isOwner) {
+      fetchSharedUsers();
+    }
+  }, [open, isOwner, jobId]);
 
   const fetchSharedUsers = async () => {
     if (!isOwner) return;

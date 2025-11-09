@@ -689,33 +689,6 @@ const JobDetail = () => {
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-2 pt-2">
-            {navigator.share && (
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    await navigator.share({
-                      title: jobName,
-                      text: `Check out my video reel: ${jobName}`,
-                      url: `${window.location.origin}/jobs/${jobId}`,
-                    });
-                    toast({
-                      title: "Shared successfully",
-                    });
-                    setShareDialogOpen(false);
-                  } catch (error: any) {
-                    if (error.name !== 'AbortError') {
-                      console.error('Share failed:', error);
-                    }
-                  }
-                }}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via...
-              </Button>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
       
