@@ -34,6 +34,7 @@ const Profile = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [jobCount, setJobCount] = useState(0);
   const [formData, setFormData] = useState({
     display_name: "",
@@ -95,6 +96,16 @@ const Profile = () => {
         display_name: profileData.display_name || "",
         bio: profileData.bio || "",
       });
+
+      // Generate signed URL for avatar if it exists
+      if (profileData.avatar_url) {
+        const { data: signedUrl } = await supabase.storage
+          .from('media')
+          .createSignedUrl(profileData.avatar_url, 3600); // 1 hour expiry
+        if (signedUrl?.signedUrl) {
+          setAvatarUrl(signedUrl.signedUrl);
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Error loading profile",
@@ -166,22 +177,27 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("media")
-        .getPublicUrl(filePath);
-
+      // Store the file path instead of URL, generate signed URL when needed
       const { error: updateError } = await supabase
         .from("profiles")
         .upsert({ 
           id: user.id,
-          avatar_url: publicUrl,
+          avatar_url: filePath,
           created_at: user.created_at
         })
         .eq("id", user.id);
 
       if (updateError) throw updateError;
 
-      setProfile({ ...profile, avatar_url: publicUrl });
+      // Generate signed URL for the new avatar
+      const { data: signedUrl } = await supabase.storage
+        .from('media')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      
+      setProfile({ ...profile, avatar_url: filePath });
+      if (signedUrl?.signedUrl) {
+        setAvatarUrl(signedUrl.signedUrl);
+      }
       toast({ title: "Profile picture updated successfully!" });
     } catch (error: any) {
       toast({
@@ -213,6 +229,7 @@ const Profile = () => {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: null });
+      setAvatarUrl("");
       toast({ title: "Profile picture removed successfully!" });
     } catch (error: any) {
       toast({
@@ -352,7 +369,7 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row gap-8">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={profile?.avatar_url} />
+                <AvatarImage src={avatarUrl} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-3xl">
                   {initials}
                 </AvatarFallback>

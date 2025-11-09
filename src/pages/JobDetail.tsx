@@ -136,19 +136,21 @@ const JobDetail = () => {
         .eq('job_id', jobId);
       
       if (mediaFiles && mediaFiles.length > 0) {
-        const clips: TimelineClip[] = mediaFiles.slice(0, 8).map((file, i) => {
-          const { data: publicUrl } = supabase.storage
+        const clipsPromises = mediaFiles.slice(0, 8).map(async (file, i) => {
+          const { data: signedUrl } = await supabase.storage
             .from('media')
-            .getPublicUrl(file.file_path);
+            .createSignedUrl(file.file_path, 3600); // 1 hour expiry
           
           return {
             id: `clip-${file.id}`,
-            thumbnail: publicUrl.publicUrl,
+            thumbnail: signedUrl?.signedUrl || '',
             startTime: i * 3.75,
             duration: 3.75,
             transition: ["fade", "slide", "zoom", "none"][i % 4] as TimelineClip["transition"],
           };
         });
+        
+        const clips: TimelineClip[] = await Promise.all(clipsPromises);
         setTimelineClips(clips);
         
         // Mock beat thumbnails
