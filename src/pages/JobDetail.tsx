@@ -338,10 +338,18 @@ const JobDetail = () => {
   };
 
   const handleShareVideo = async () => {
-    if (!finalVideoUrl) return;
+    if (!finalVideoUrl) {
+      toast({
+        title: "Video not ready",
+        description: "Please wait for the video to finish processing",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const shareUrl = `${window.location.origin}/jobs/${jobId}`;
     
+    // Check if Web Share API is available
     if (navigator.share) {
       try {
         await navigator.share({
@@ -353,11 +361,15 @@ const JobDetail = () => {
           title: "Shared successfully",
         });
       } catch (error: any) {
+        // AbortError means user cancelled the share dialog
         if (error.name !== 'AbortError') {
           console.error('Share failed:', error);
+          // Fallback to copy link if share fails
+          handleCopyLink();
         }
       }
     } else {
+      // Fallback: copy link to clipboard
       handleCopyLink();
     }
   };
@@ -601,8 +613,10 @@ const JobDetail = () => {
                   <Button 
                     variant="outline"
                     onClick={handleShareVideo}
+                    className="flex items-center gap-2"
                   >
                     <Share2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Share</span>
                   </Button>
                 </div>
               </Card>
