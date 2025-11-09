@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Music, Scissors, Sparkles, GripVertical } from "lucide-react";
+import { Music, Scissors, Sparkles, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -31,6 +31,9 @@ interface TimelineClip {
   startTime: number;
   duration: number;
   transition: "fade" | "slide" | "zoom" | "none";
+  originalDuration?: number;
+  trimStart?: number;
+  trimEnd?: number;
 }
 
 interface TimelineProps {
@@ -39,6 +42,7 @@ interface TimelineProps {
   clips?: TimelineClip[];
   currentTime?: number;
   onClipsReorder?: (clips: TimelineClip[]) => void;
+  onClipTrim?: (clipId: string, trimStart: number, trimEnd: number) => void;
 }
 
 interface SortableClipProps {
@@ -48,6 +52,8 @@ interface SortableClipProps {
   onSelect: () => void;
   getTransitionIcon: (transition: string) => string;
   getTransitionColor: (transition: string) => string;
+  onTrimStart: (delta: number) => void;
+  onTrimEnd: (delta: number) => void;
 }
 
 const SortableClip = ({ 
@@ -56,7 +62,9 @@ const SortableClip = ({
   selected, 
   onSelect, 
   getTransitionIcon, 
-  getTransitionColor 
+  getTransitionColor,
+  onTrimStart,
+  onTrimEnd 
 }: SortableClipProps) => {
   const {
     attributes,
@@ -67,6 +75,11 @@ const SortableClip = ({
     isDragging,
   } = useSortable({ id: clip.id });
 
+  const [isTrimmingStart, setIsTrimmingStart] = useState(false);
+  const [isTrimmingEnd, setIsTrimmingEnd] = useState(false);
+  const trimStartRef = useRef<{ startX: number; startTrim: number } | null>(null);
+  const trimEndRef = useRef<{ startX: number; startTrim: number } | null>(null);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -74,16 +87,86 @@ const SortableClip = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleTrimStartMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTrimmingStart(true);
+    trimStartRef.current = {
+      startX: e.clientX,
+      startTrim: clip.trimStart || 0,
+    };
+  };
+
+  const handleTrimEndMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTrimmingEnd(true);
+    trimEndRef.current = {
+      startX: e.clientX,
+      startTrim: clip.trimEnd || 0,
+    };
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isTrimmingStart && trimStartRef.current) {
+      const delta = (e.clientX - trimStartRef.current.startX) / 20; // Scale factor
+      onTrimStart(delta);
+    } else if (isTrimmingEnd && trimEndRef.current) {
+      const delta = (e.clientX - trimEndRef.current.startX) / 20; // Scale factor
+      onTrimEnd(delta);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsTrimmingStart(false);
+    setIsTrimmingEnd(false);
+    trimStartRef.current = null;
+    trimEndRef.current = null;
+  };
+
+  useState(() => {
+    if (isTrimmingStart || isTrimmingEnd) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  });
+
+  const trimmedDuration = clip.duration - (clip.trimStart || 0) - (clip.trimEnd || 0);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`h-20 min-w-[100px] cursor-move overflow-hidden rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
+      className={`h-20 min-w-[100px] cursor-move overflow-visible rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
         selected ? "border-primary shadow-glow" : "border-border/50"
       }`}
       onClick={onSelect}
     >
-      <div className="h-full w-full bg-gradient-card relative group">
+      <div className="h-full w-full bg-gradient-card relative group overflow-hidden rounded-lg">
+        {/* Left trim handle */}
+        <div
+          onMouseDown={handleTrimStartMouseDown}
+          className={`absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 opacity-0 group-hover:opacity-100 transition-opacity ${
+            isTrimmingStart ? 'bg-accent' : 'bg-accent/50 hover:bg-accent'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ChevronLeft className="h-full w-2 text-background" />
+        </div>
+
+        {/* Right trim handle */}
+        <div
+          onMouseDown={handleTrimEndMouseDown}
+          className={`absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 opacity-0 group-hover:opacity-100 transition-opacity ${
+            isTrimmingEnd ? 'bg-accent' : 'bg-accent/50 hover:bg-accent'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ChevronRight className="h-full w-2 text-background" />
+        </div>
+
         {/* Drag handle */}
         <div
           {...attributes}
@@ -98,6 +181,9 @@ const SortableClip = ({
             <div className="text-xs font-mono text-foreground/80">
               Clip {index + 1}
             </div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">
+              {trimmedDuration.toFixed(1)}s
+            </div>
             {clip.transition !== "none" && (
               <Badge className={`mt-1 text-xs ${getTransitionColor(clip.transition)}`}>
                 {getTransitionIcon(clip.transition)} {clip.transition}
@@ -105,6 +191,20 @@ const SortableClip = ({
             )}
           </div>
         </div>
+
+        {/* Trimmed regions overlay */}
+        {(clip.trimStart || 0) > 0 && (
+          <div 
+            className="absolute left-0 top-0 bottom-0 bg-muted/80 border-r-2 border-accent"
+            style={{ width: `${((clip.trimStart || 0) / clip.duration) * 100}%` }}
+          />
+        )}
+        {(clip.trimEnd || 0) > 0 && (
+          <div 
+            className="absolute right-0 top-0 bottom-0 bg-muted/80 border-l-2 border-accent"
+            style={{ width: `${((clip.trimEnd || 0) / clip.duration) * 100}%` }}
+          />
+        )}
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-primary/20 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center pointer-events-none">
@@ -120,7 +220,8 @@ export const Timeline = ({
   beats = [], 
   clips = [], 
   currentTime = 0,
-  onClipsReorder 
+  onClipsReorder,
+  onClipTrim 
 }: TimelineProps) => {
   const [hoveredBeat, setHoveredBeat] = useState<number | null>(null);
   const [selectedClip, setSelectedClip] = useState<string | null>(null);
@@ -142,13 +243,19 @@ export const Timeline = ({
     : beats;
 
   const mockClips = clips.length === 0
-    ? Array.from({ length: 8 }, (_, i) => ({
-        id: `clip-${i}`,
-        thumbnail: "/placeholder.svg",
-        startTime: i * (duration / 8),
-        duration: duration / 8,
-        transition: ["fade", "slide", "zoom", "none"][Math.floor(Math.random() * 4)] as TimelineClip["transition"],
-      }))
+    ? Array.from({ length: 8 }, (_, i) => {
+        const clipDuration = duration / 8;
+        return {
+          id: `clip-${i}`,
+          thumbnail: "/placeholder.svg",
+          startTime: i * clipDuration,
+          duration: clipDuration,
+          originalDuration: clipDuration,
+          trimStart: 0,
+          trimEnd: 0,
+          transition: ["fade", "slide", "zoom", "none"][Math.floor(Math.random() * 4)] as TimelineClip["transition"],
+        };
+      })
     : clips;
 
   // Initialize ordered clips when mockClips changes
@@ -181,6 +288,38 @@ export const Timeline = ({
         return reorderedClips;
       });
     }
+  };
+
+  const handleClipTrim = (clipId: string, type: 'start' | 'end', delta: number) => {
+    setOrderedClips((items) => {
+      const updatedClips = items.map((clip) => {
+        if (clip.id !== clipId) return clip;
+        
+        const maxTrim = (clip.originalDuration || clip.duration) * 0.8; // Max 80% can be trimmed
+        
+        if (type === 'start') {
+          const newTrimStart = Math.max(0, Math.min((clip.trimStart || 0) + delta, maxTrim));
+          const updated = { ...clip, trimStart: newTrimStart };
+          
+          if (onClipTrim) {
+            onClipTrim(clipId, newTrimStart, clip.trimEnd || 0);
+          }
+          
+          return updated;
+        } else {
+          const newTrimEnd = Math.max(0, Math.min((clip.trimEnd || 0) - delta, maxTrim));
+          const updated = { ...clip, trimEnd: newTrimEnd };
+          
+          if (onClipTrim) {
+            onClipTrim(clipId, clip.trimStart || 0, newTrimEnd);
+          }
+          
+          return updated;
+        }
+      });
+      
+      return updatedClips;
+    });
   };
 
   const getTransitionIcon = (transition: string) => {
@@ -279,7 +418,7 @@ export const Timeline = ({
         {/* Clips Timeline */}
         <div className="relative min-h-24 rounded-lg bg-muted/20 p-2">
           <div className="mb-2 text-xs text-muted-foreground">
-            Drag clips to reorder • Click to select
+            Drag clips to reorder • Click to select • Drag edges to trim
           </div>
           <DndContext
             sensors={sensors}
@@ -300,6 +439,8 @@ export const Timeline = ({
                     onSelect={() => setSelectedClip(clip.id)}
                     getTransitionIcon={getTransitionIcon}
                     getTransitionColor={getTransitionColor}
+                    onTrimStart={(delta) => handleClipTrim(clip.id, 'start', delta)}
+                    onTrimEnd={(delta) => handleClipTrim(clip.id, 'end', delta)}
                   />
                 ))}
               </div>

@@ -187,16 +187,19 @@ const Create = () => {
                   variant="outline" 
                   className="w-full"
                   onClick={() => {
-                    // Simulate loading sample dataset
+                    // Create sample files with correct MIME types
+                    const sampleFiles = [
+                      new File([new Blob()], "sample_beach.jpg", { type: "image/jpeg" }),
+                      new File([new Blob()], "sample_sunset.mp4", { type: "video/mp4" }),
+                      new File([new Blob()], "sample_nature.jpg", { type: "image/jpeg" }),
+                      new File([new Blob()], "sample_city.png", { type: "image/png" }),
+                      new File([new Blob()], "sample_adventure.mov", { type: "video/quicktime" }),
+                    ];
+                    setFiles(sampleFiles);
                     toast({
                       title: "Sample loaded",
-                      description: "Demo photos and videos added",
+                      description: "5 demo files added to your library",
                     });
-                    setFiles([
-                      new File([], "sample_1.jpg"),
-                      new File([], "sample_2.mp4"),
-                      new File([], "sample_3.jpg"),
-                    ]);
                   }}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
