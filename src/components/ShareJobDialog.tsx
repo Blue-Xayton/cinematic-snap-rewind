@@ -76,35 +76,24 @@ export const ShareJobDialog = ({ open, onOpenChange, jobId, jobName, isOwner }: 
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase.functions.invoke('share-job', {
+        body: {
+          job_id: jobId,
+          email: email.trim(),
+          role,
+        },
+      });
 
-      // Find user by email (note: in production, you'd need a cloud function for this)
-      const { data: targetUser } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', email) // Simplified - in production use proper email lookup
-        .single();
+      if (error) throw error;
 
-      if (!targetUser) {
+      if (data?.error) {
         toast({
-          title: "User not found",
-          description: "No user exists with that email",
+          title: "Unable to share job",
+          description: data.error,
           variant: "destructive",
         });
         return;
       }
-
-      const { error } = await supabase
-        .from('shared_jobs')
-        .insert({
-          job_id: jobId,
-          shared_with_user_id: targetUser.id,
-          role,
-          created_by: user.id,
-        });
-
-      if (error) throw error;
 
       toast({
         title: "Job shared successfully",
@@ -116,7 +105,7 @@ export const ShareJobDialog = ({ open, onOpenChange, jobId, jobName, isOwner }: 
     } catch (error: any) {
       toast({
         title: "Error sharing job",
-        description: error.message,
+        description: error.message || "Failed to share job",
         variant: "destructive",
       });
     } finally {
