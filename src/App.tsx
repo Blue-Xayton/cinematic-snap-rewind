@@ -9,6 +9,7 @@ import Create from "./pages/Create";
 import JobList from "./pages/JobList";
 import JobDetail from "./pages/JobDetail";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/create" element={<AuthGuard><Create /></AuthGuard>} />
           <Route path="/jobs" element={<AuthGuard><JobList /></AuthGuard>} />
           <Route path="/jobs/:jobId" element={<AuthGuard><JobDetail /></AuthGuard>} />
+          <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
