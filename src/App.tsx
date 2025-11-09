@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
 import { AppLayout } from "./components/layout/AppLayout";
+import { OnboardingTutorial } from "./components/OnboardingTutorial";
 import Landing from "./pages/Landing";
 import Create from "./pages/Create";
 import JobList from "./pages/JobList";
@@ -21,6 +22,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <OnboardingTutorial />
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<AuthGuard><AppLayout><Landing /></AppLayout></AuthGuard>} />

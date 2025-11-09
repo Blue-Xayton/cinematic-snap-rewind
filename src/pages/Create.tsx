@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { FileUploadItem } from "@/components/FileUploadItem";
 import { MediaPreviewGallery } from "@/components/MediaPreviewGallery";
+import { TemplateSelector } from "@/components/TemplateSelector";
 
 const Create = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const Create = () => {
   const [mood, setMood] = useState("cinematic");
   const [track, setTrack] = useState("track1");
   const [duration, setDuration] = useState([30]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -102,6 +104,18 @@ const Create = () => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleSelectTemplate = (template: any) => {
+    setSelectedTemplateId(template.id);
+    setMood(template.mood);
+    setTrack(template.track);
+    setDuration([template.target_duration]);
+    
+    toast({
+      title: "Template applied",
+      description: `Using "${template.name}" settings`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -115,6 +129,14 @@ const Create = () => {
           </Button>
           <h1 className="text-4xl font-bold text-foreground">Create Your Reel</h1>
           <p className="mt-2 text-muted-foreground">Upload your memories and let AI do the magic</p>
+        </div>
+
+        {/* Template Selector */}
+        <div className="mb-8">
+          <TemplateSelector 
+            onSelectTemplate={handleSelectTemplate}
+            selectedTemplateId={selectedTemplateId}
+          />
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">

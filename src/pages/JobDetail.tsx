@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2, Copy, Check } from "lucide-react";
+import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2, Copy, Check, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timeline } from "@/components/Timeline";
 import { TransitionSelector } from "@/components/TransitionSelector";
 import { ExportSettings } from "@/components/ExportSettings";
+import { ShareJobDialog } from "@/components/ShareJobDialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -70,6 +71,8 @@ const JobDetail = () => {
   const [timelineClips, setTimelineClips] = useState<TimelineClip[]>([]);
   const [hasTimelineChanges, setHasTimelineChanges] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
+  const [isOwner, setIsOwner] = useState(true);
 
   // Fetch job details and subscribe to real-time updates
   useEffect(() => {
@@ -92,6 +95,10 @@ const JobDetail = () => {
         setJobName(jobData.name || `Reel ${jobId.slice(0, 8)}`);
         setStatus(jobData.status as JobStatus || 'queued');
         setFinalVideoUrl(jobData.final_video_url);
+        
+        // Check if current user is the owner
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsOwner(user?.id === jobData.user_id);
         
         // Calculate progress based on status
         const statusProgress: Record<string, number> = {
@@ -499,6 +506,16 @@ const JobDetail = () => {
                 )}
                 {statusLabels[status]}
               </Badge>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCollaborationDialogOpen(true)}
+                  title="Share with team"
+                >
+                  <Users className="h-4 w-4" />
+                </Button>
+              )}
               <Button 
                 variant="destructive" 
                 size="icon"
@@ -701,6 +718,15 @@ const JobDetail = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Collaboration Share Dialog */}
+      <ShareJobDialog
+        open={collaborationDialogOpen}
+        onOpenChange={setCollaborationDialogOpen}
+        jobId={jobId || ''}
+        jobName={jobName}
+        isOwner={isOwner}
+      />
       
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
