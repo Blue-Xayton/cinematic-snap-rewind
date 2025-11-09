@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Film, Upload, Wand2, Download, Sparkles, Zap, CheckCircle2, ArrowRight, Play } from "lucide-react";
+import { Film, Upload, Wand2, Download, Sparkles, Zap, CheckCircle2, ArrowRight, Play, Mail, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-image.jpg";
 import featureAiEditing from "@/assets/feature-ai-editing.jpg";
 import featureSmartSelection from "@/assets/feature-smart-selection.jpg";
@@ -17,6 +19,25 @@ import showcaseAfter3 from "@/assets/showcase-after-3.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+
+  const handleContactSupport = () => {
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Message sent!",
+      description: "Our support team will get back to you within 24 hours.",
+    });
+    setEmail("");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -379,11 +400,15 @@ const Landing = () => {
                   <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
                     After AI ✨
                   </div>
-                  <img 
-                    src={showcaseAfter1} 
-                    alt="Cinematic vacation reel" 
-                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
-                  />
+                  <div className="relative">
+                    <video 
+                      src="/videos/example-vacation-reel.mp4"
+                      poster={showcaseAfter1}
+                      className="w-full h-[500px] object-cover"
+                      controls
+                      preload="metadata"
+                    />
+                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">30-second cinematic reel</p>
@@ -434,11 +459,15 @@ const Landing = () => {
                   <div className="absolute top-4 left-4 z-10 bg-accent/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-accent-foreground border border-accent">
                     After AI ✨
                   </div>
-                  <img 
-                    src={showcaseAfter2} 
-                    alt="Cinematic travel reel" 
-                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
-                  />
+                  <div className="relative">
+                    <video 
+                      src="/videos/example-travel-reel.mp4"
+                      poster={showcaseAfter2}
+                      className="w-full h-[500px] object-cover"
+                      controls
+                      preload="metadata"
+                    />
+                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">Stabilized cinematic journey</p>
@@ -489,11 +518,15 @@ const Landing = () => {
                   <div className="absolute top-4 left-4 z-10 bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium text-primary-foreground border border-primary">
                     After AI ✨
                   </div>
-                  <img 
-                    src={showcaseAfter3} 
-                    alt="Cinematic celebration reel" 
-                    className="w-full h-[500px] object-cover transition-all duration-300 group-hover:scale-105 group-hover:brightness-110"
-                  />
+                  <div className="relative">
+                    <video 
+                      src="/videos/example-celebration-reel.mp4"
+                      poster={showcaseAfter3}
+                      className="w-full h-[500px] object-cover"
+                      controls
+                      preload="metadata"
+                    />
+                  </div>
                 </Card>
                 <div className="text-center space-y-2">
                   <p className="text-sm text-foreground font-medium">Emotional celebration story</p>
@@ -736,22 +769,43 @@ const Landing = () => {
             </Accordion>
 
             {/* CTA after FAQ */}
-            <Card className="mt-16 bg-gradient-card border-border/50 p-8 text-center shadow-elegant">
-              <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
-              <p className="text-xl font-semibold text-foreground mb-2">
+            <Card className="mt-16 bg-gradient-card border-border/50 p-8 sm:p-12 text-center shadow-elegant">
+              <MessageCircle className="h-14 w-14 text-primary mx-auto mb-6" />
+              <p className="text-2xl font-bold text-foreground mb-3">
                 Still have questions?
               </p>
-              <p className="text-muted-foreground mb-6">
-                Try it yourself! Create your first reel for free and see the magic in action.
+              <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+                Our support team is ready to help you get started. Drop us a message and we'll respond within 24 hours.
               </p>
+              
+              <div className="max-w-md mx-auto mb-8">
+                <div className="flex gap-3">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <Button 
+                    variant="hero"
+                    size="lg"
+                    onClick={handleContactSupport}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Contact Support
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button 
-                  variant="hero" 
+                  variant="outline" 
                   size="lg"
                   onClick={() => navigate('/create')}
                 >
                   <Upload className="mr-2 h-4 w-4" />
-                  Create Free Reel
+                  Or Try It Free
                 </Button>
                 <Button 
                   variant="outline" 
@@ -759,7 +813,7 @@ const Landing = () => {
                   onClick={() => navigate('/jobs')}
                 >
                   <Film className="mr-2 h-4 w-4" />
-                  See More Examples
+                  View Examples
                 </Button>
               </div>
             </Card>
