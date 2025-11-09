@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2 } from "lucide-react";
+import { Download, Share2, CheckCircle2, Loader2, PlayCircle, Trash2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Timeline } from "@/components/Timeline";
 import { TransitionSelector } from "@/components/TransitionSelector";
@@ -21,6 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type JobStatus = "queued" | "ingesting" | "scoring" | "beat_mapping" | "assembling" | "rendering" | "done" | "error";
 
@@ -62,6 +69,7 @@ const JobDetail = () => {
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [timelineClips, setTimelineClips] = useState<TimelineClip[]>([]);
   const [hasTimelineChanges, setHasTimelineChanges] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Fetch job details and subscribe to real-time updates
   useEffect(() => {
@@ -347,31 +355,8 @@ const JobDetail = () => {
       return;
     }
     
-    const shareUrl = `${window.location.origin}/jobs/${jobId}`;
-    
-    // Check if Web Share API is available
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: jobName,
-          text: `Check out my video reel: ${jobName}`,
-          url: shareUrl,
-        });
-        toast({
-          title: "Shared successfully",
-        });
-      } catch (error: any) {
-        // AbortError means user cancelled the share dialog
-        if (error.name !== 'AbortError') {
-          console.error('Share failed:', error);
-          // Fallback to copy link if share fails
-          handleCopyLink();
-        }
-      }
-    } else {
-      // Fallback: copy link to clipboard
-      handleCopyLink();
-    }
+    // Open share dialog to show the link
+    setShareDialogOpen(true);
   };
 
   const handleClipSelect = (clipId: string) => {
@@ -656,6 +641,66 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+      
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Your Video</DialogTitle>
+            <DialogDescription>
+              Copy this link to share your video reel with others
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <div className="flex h-10 w-full rounded-md border border-border bg-muted px-3 py-2 text-sm">
+                <input
+                  readOnly
+                  value={`${window.location.origin}/jobs/${jobId}`}
+                  className="w-full bg-transparent outline-none"
+                />
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              className="px-3"
+              onClick={() => {
+                handleCopyLink();
+                setShareDialogOpen(false);
+              }}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2 pt-2">
+            {navigator.share && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await navigator.share({
+                      title: jobName,
+                      text: `Check out my video reel: ${jobName}`,
+                      url: `${window.location.origin}/jobs/${jobId}`,
+                    });
+                    toast({
+                      title: "Shared successfully",
+                    });
+                    setShareDialogOpen(false);
+                  } catch (error: any) {
+                    if (error.name !== 'AbortError') {
+                      console.error('Share failed:', error);
+                    }
+                  }
+                }}
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via...
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
