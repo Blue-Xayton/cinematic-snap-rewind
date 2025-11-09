@@ -24,6 +24,9 @@ const ALLOWED_TYPES = [
 ];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
+// Backend API URL
+const API_URL = "https://sporular-georgiana-anacoluthically.ngrok-free.dev";
+
 const Create = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -155,7 +158,7 @@ const Create = () => {
       files.forEach((file) => formData.append("files", file));
 
       // Construct URL with title as query parameter
-      const uploadUrl = `http://localhost:8000/upload/?title=${encodeURIComponent(finalName)}`;
+      const uploadUrl = `${API_URL}/upload/?title=${encodeURIComponent(finalName)}`;
 
       // Send POST request to backend
       const response = await fetch(uploadUrl, {
@@ -172,7 +175,7 @@ const Create = () => {
       const data = await response.json();
 
       // Construct full video URL from relative path
-      const videoUrl = `http://localhost:8000${data.output_video}`;
+      const videoUrl = `${API_URL}${data.output_video}`;
       setGeneratedVideoUrl(videoUrl);
 
       toast({
@@ -188,8 +191,7 @@ const Create = () => {
 
       if (error.message?.includes("Failed to fetch") || error.name === "TypeError") {
         errorMessage = "Cannot connect to backend server";
-        errorDetails =
-          "Make sure your FastAPI backend is running at http://localhost:8000. If running on Lovable preview, you need to use a tunneling service like ngrok.";
+        errorDetails = `Make sure your FastAPI backend and ngrok are running at ${API_URL}`;
       } else if (error.message?.includes("500")) {
         errorMessage = "Backend server error";
         errorDetails = error.message;
@@ -542,21 +544,25 @@ const Create = () => {
                       <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
                         <li>
                           Start backend:{" "}
-                          <code className="bg-background px-1.5 py-0.5 rounded text-primary">python main.py</code>
+                          <code className="bg-background px-1.5 py-0.5 rounded text-primary">
+                            uvicorn app.main:app --reload
+                          </code>
                         </li>
                         <li>
-                          Verify backend health at{" "}
+                          Start ngrok:{" "}
+                          <code className="bg-background px-1.5 py-0.5 rounded text-primary">ngrok http 8000</code>
+                        </li>
+                        <li>
+                          Verify backend at{" "}
                           <a
-                            href="http://localhost:8000"
+                            href={API_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"
                           >
-                            localhost:8000
+                            {API_URL}
                           </a>
                         </li>
-                        <li>Check CORS is enabled in backend (allow_origins=["*"])</li>
-                        <li>If on Lovable preview URL, use ngrok to expose localhost</li>
                       </ul>
                     </Card>
                   </div>
