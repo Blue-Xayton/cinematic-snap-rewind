@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Music, Scissors, Sparkles, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
@@ -122,7 +122,7 @@ const SortableClip = ({
     trimEndRef.current = null;
   };
 
-  useState(() => {
+  useEffect(() => {
     if (isTrimmingStart || isTrimmingEnd) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -131,7 +131,7 @@ const SortableClip = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  });
+  }, [isTrimmingStart, isTrimmingEnd]);
 
   const trimmedDuration = clip.duration - (clip.trimStart || 0) - (clip.trimEnd || 0);
 
