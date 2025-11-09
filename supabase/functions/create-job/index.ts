@@ -1,9 +1,32 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// Allowed file types for uploads
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/jpg', 
+  'image/png',
+  'image/webp',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm'
+]
+
+// Maximum file size: 100MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
+// Job parameter validation schema
+const jobSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+  mood: z.string().trim().min(1, 'Mood is required').max(50, 'Mood must be less than 50 characters'),
+  track: z.string().trim().min(1, 'Track is required').max(100, 'Track must be less than 100 characters'),
+  target_duration: z.number().int().min(15, 'Duration must be at least 15 seconds').max(120, 'Duration must be at most 120 seconds')
+})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,20 +53,54 @@ Deno.serve(async (req) => {
     }
 
     const formData = await req.formData()
-    const name = formData.get('name') as string
-    const mood = formData.get('mood') as string
-    const track = formData.get('track') as string
-    const target_duration = parseInt(formData.get('target_duration') as string)
+    
+    // Validate input parameters
+    let validated
+    try {
+      validated = jobSchema.parse({
+        name: formData.get('name') as string,
+        mood: formData.get('mood') as string,
+        track: formData.get('track') as string,
+        target_duration: parseInt(formData.get('target_duration') as string)
+      })
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid input parameters', details: error.errors }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      throw error
+    }
+
+    // Validate file uploads
+    const files = formData.getAll('files')
+    for (const file of files) {
+      if (file instanceof File) {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          return new Response(
+            JSON.stringify({ error: `Invalid file type: ${file.type}. Allowed types: ${ALLOWED_TYPES.join(', ')}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          return new Response(
+            JSON.stringify({ error: `File too large: ${file.name}. Maximum size is 100MB` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      }
+    }
 
     // Create job record
     const { data: job, error: jobError } = await supabase
       .from('jobs')
       .insert({
         user_id: user.id,
-        name: name || `Reel_${new Date().toISOString().split('T')[0]}`,
-        mood,
-        track,
-        target_duration,
+        name: validated.name,
+        mood: validated.mood,
+        track: validated.track,
+        target_duration: validated.target_duration,
         status: 'queued',
       })
       .select()
@@ -52,7 +109,6 @@ Deno.serve(async (req) => {
     if (jobError) throw jobError
 
     // Handle file uploads
-    const files = formData.getAll('files')
     for (const file of files) {
       if (file instanceof File) {
         const fileName = `${user.id}/${job.id}/${crypto.randomUUID()}-${file.name}`

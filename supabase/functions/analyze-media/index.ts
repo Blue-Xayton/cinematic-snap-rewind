@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,29 +12,75 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authenticate user
     const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Validate input
+    const requestSchema = z.object({
+      job_id: z.string().uuid()
+    })
+
+    const { job_id } = requestSchema.parse(await req.json())
+
+    // Verify user owns or has access to the job
+    const { data: job, error: jobCheckError } = await supabase
+      .from('jobs')
+      .select('user_id')
+      .eq('id', job_id)
+      .single()
+
+    if (jobCheckError || !job) {
+      return new Response(JSON.stringify({ error: 'Job not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (job.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Use service role key for the rest of the operations
+    const adminSupabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { job_id } = await req.json()
-
     // Get media files for this job
-    const { data: files, error: filesError } = await supabase
+    const { data: files, error: filesError } = await adminSupabase
       .from('media_files')
       .select('*')
       .eq('job_id', job_id)
 
     if (filesError) throw filesError
 
-    await supabase.from('job_logs').insert({
+    await adminSupabase.from('job_logs').insert({
       job_id,
       message: `Analyzing ${files.length} media files...`,
       level: 'info',
     })
 
     // Update job status
-    await supabase
+    await adminSupabase
       .from('jobs')
       .update({ status: 'processing', progress: 10 })
       .eq('id', job_id)
@@ -49,7 +96,7 @@ Deno.serve(async (req) => {
       
       try {
         // Get the file URL
-        const { data: { publicUrl } } = supabase.storage
+        const { data: { publicUrl } } = adminSupabase.storage
           .from('media')
           .getPublicUrl(file.file_path)
 
@@ -85,12 +132,12 @@ Deno.serve(async (req) => {
           const scoreText = result.choices?.[0]?.message?.content || '5'
           const score = Math.min(10, Math.max(0, parseFloat(scoreText) || 5))
 
-          await supabase
+          await adminSupabase
             .from('media_files')
             .update({ score })
             .eq('id', file.id)
 
-          await supabase.from('job_logs').insert({
+          await adminSupabase.from('job_logs').insert({
             job_id,
             message: `Scored ${file.file_type} ${i + 1}/${files.length}: ${score.toFixed(1)}/10`,
             level: 'info',
@@ -98,7 +145,7 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         console.error(`Error scoring file ${file.id}:`, error)
-        await supabase.from('job_logs').insert({
+        await adminSupabase.from('job_logs').insert({
           job_id,
           message: `Failed to score file ${i + 1}/${files.length}`,
           level: 'warn',
@@ -107,10 +154,10 @@ Deno.serve(async (req) => {
 
       // Update progress
       const progress = Math.floor(10 + (i / files.length) * 40)
-      await supabase.from('jobs').update({ progress }).eq('id', job_id)
+      await adminSupabase.from('jobs').update({ progress }).eq('id', job_id)
     }
 
-    await supabase.from('job_logs').insert({
+    await adminSupabase.from('job_logs').insert({
       job_id,
       message: 'Media analysis complete',
       level: 'info',
