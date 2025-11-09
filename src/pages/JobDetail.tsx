@@ -210,6 +210,13 @@ const JobDetail = () => {
                   transition: ["fade", "slide", "zoom", "none"][i % 4] as "fade" | "slide" | "zoom" | "none",
                 }))}
                 currentTime={progress === 100 ? 30 : (progress / 100) * 30}
+                onClipsReorder={(reorderedClips) => {
+                  console.log("Clips reordered:", reorderedClips);
+                  toast({
+                    title: "Timeline updated",
+                    description: "Clip order has been changed. Re-render to apply changes.",
+                  });
+                }}
               />
             )}
 

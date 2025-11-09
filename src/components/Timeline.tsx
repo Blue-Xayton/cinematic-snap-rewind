@@ -1,7 +1,24 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Music, Scissors, Sparkles } from "lucide-react";
+import { Music, Scissors, Sparkles, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface BeatMarker {
   time: number;
@@ -21,11 +38,100 @@ interface TimelineProps {
   beats?: BeatMarker[];
   clips?: TimelineClip[];
   currentTime?: number;
+  onClipsReorder?: (clips: TimelineClip[]) => void;
 }
 
-export const Timeline = ({ duration, beats = [], clips = [], currentTime = 0 }: TimelineProps) => {
+interface SortableClipProps {
+  clip: TimelineClip;
+  index: number;
+  selected: boolean;
+  onSelect: () => void;
+  getTransitionIcon: (transition: string) => string;
+  getTransitionColor: (transition: string) => string;
+}
+
+const SortableClip = ({ 
+  clip, 
+  index, 
+  selected, 
+  onSelect, 
+  getTransitionIcon, 
+  getTransitionColor 
+}: SortableClipProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: clip.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`h-20 min-w-[100px] cursor-move overflow-hidden rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
+        selected ? "border-primary shadow-glow" : "border-border/50"
+      }`}
+      onClick={onSelect}
+    >
+      <div className="h-full w-full bg-gradient-card relative group">
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-1 left-1 z-10 rounded bg-background/80 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
+        </div>
+
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
+          <div className="text-center">
+            <div className="text-xs font-mono text-foreground/80">
+              Clip {index + 1}
+            </div>
+            {clip.transition !== "none" && (
+              <Badge className={`mt-1 text-xs ${getTransitionColor(clip.transition)}`}>
+                {getTransitionIcon(clip.transition)} {clip.transition}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-primary/20 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center pointer-events-none">
+          <Sparkles className="h-6 w-6 text-primary" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const Timeline = ({ 
+  duration, 
+  beats = [], 
+  clips = [], 
+  currentTime = 0,
+  onClipsReorder 
+}: TimelineProps) => {
   const [hoveredBeat, setHoveredBeat] = useState<number | null>(null);
   const [selectedClip, setSelectedClip] = useState<string | null>(null);
+  const [orderedClips, setOrderedClips] = useState<TimelineClip[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Generate mock data if not provided
   const mockBeats = beats.length === 0 
@@ -44,6 +150,38 @@ export const Timeline = ({ duration, beats = [], clips = [], currentTime = 0 }: 
         transition: ["fade", "slide", "zoom", "none"][Math.floor(Math.random() * 4)] as TimelineClip["transition"],
       }))
     : clips;
+
+  // Initialize ordered clips when mockClips changes
+  useState(() => {
+    setOrderedClips(mockClips);
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setOrderedClips((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        
+        // Recalculate startTime for each clip based on new order
+        const clipDuration = duration / newOrder.length;
+        const reorderedClips = newOrder.map((clip, index) => ({
+          ...clip,
+          startTime: index * clipDuration,
+        }));
+
+        // Notify parent component if callback provided
+        if (onClipsReorder) {
+          onClipsReorder(reorderedClips);
+        }
+
+        return reorderedClips;
+      });
+    }
+  };
 
   const getTransitionIcon = (transition: string) => {
     switch (transition) {
@@ -140,44 +278,33 @@ export const Timeline = ({ duration, beats = [], clips = [], currentTime = 0 }: 
 
         {/* Clips Timeline */}
         <div className="relative min-h-24 rounded-lg bg-muted/20 p-2">
-          <div className="relative h-20">
-            {mockClips.map((clip, i) => (
-              <div
-                key={clip.id}
-                className={`absolute top-0 h-full cursor-pointer overflow-hidden rounded-lg border-2 transition-all hover:border-primary hover:shadow-elegant ${
-                  selectedClip === clip.id
-                    ? "border-primary shadow-glow"
-                    : "border-border/50"
-                }`}
-                style={{
-                  left: `${(clip.startTime / duration) * 100}%`,
-                  width: `${(clip.duration / duration) * 100}%`,
-                }}
-                onClick={() => setSelectedClip(clip.id)}
-              >
-                {/* Clip thumbnail */}
-                <div className="h-full w-full bg-gradient-card relative group">
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
-                    <div className="text-center">
-                      <div className="text-xs font-mono text-foreground/80">
-                        Clip {i + 1}
-                      </div>
-                      {clip.transition !== "none" && (
-                        <Badge className={`mt-1 text-xs ${getTransitionColor(clip.transition)}`}>
-                          {getTransitionIcon(clip.transition)} {clip.transition}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-primary/20 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="mb-2 text-xs text-muted-foreground">
+            Drag clips to reorder • Click to select
           </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={orderedClips.map(c => c.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {orderedClips.map((clip, i) => (
+                  <SortableClip
+                    key={clip.id}
+                    clip={clip}
+                    index={i}
+                    selected={selectedClip === clip.id}
+                    onSelect={() => setSelectedClip(clip.id)}
+                    getTransitionIcon={getTransitionIcon}
+                    getTransitionColor={getTransitionColor}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Legend */}
