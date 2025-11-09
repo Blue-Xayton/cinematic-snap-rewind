@@ -27,6 +27,9 @@ const Create = () => {
   const [duration, setDuration] = useState([30]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [mode, setMode] = useState<"template" | "custom">("template");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
   
   // Listen for tutorial mode switch events
   useEffect(() => {
@@ -134,36 +137,51 @@ const Create = () => {
     // Generate default name if not provided
     const finalName = jobName.trim() || generateDefaultName();
 
+    setIsProcessing(true);
+    setGeneratedVideoUrl(null);
+    setProcessingError(null);
+
     try {
-      // Create FormData
+      // Create FormData for FastAPI backend
       const formData = new FormData();
       files.forEach(file => formData.append('files', file));
-      formData.append('name', finalName);
-      formData.append('mood', mood);
-      formData.append('track', track);
-      formData.append('target_duration', duration[0].toString());
+      
+      // Construct URL with title as query parameter
+      const uploadUrl = `http://localhost:8000/upload/?title=${encodeURIComponent(finalName)}`;
 
-      // Call create-job edge function
-      const supabase = (await import("@/integrations/supabase/client")).supabase;
-      const { data, error } = await supabase.functions.invoke('create-job', {
+      // Send POST request to backend
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
         body: formData,
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      // Parse JSON response from backend
+      const data = await response.json();
+
+      // Construct full video URL from relative path
+      const videoUrl = `http://localhost:8000${data.output_video}`;
+      setGeneratedVideoUrl(videoUrl);
 
       toast({
-        title: "Processing started!",
-        description: `Creating "${finalName}"...`,
+        title: "Video generated!",
+        description: `Processed ${data.files_processed} files successfully`,
       });
-      
-      // Navigate to job detail page
-      navigate(`/jobs/${data.job_id}`);
+
     } catch (error: any) {
+      console.error('Upload error:', error);
+      const errorMessage = error.message || "Failed to create reel. Make sure the backend is running at http://localhost:8000";
+      setProcessingError(errorMessage);
       toast({
-        title: "Error",
-        description: error.message || "Failed to create job",
+        title: "Error creating reel",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -461,33 +479,116 @@ const Create = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">AI-Powered Processing</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    Our AI will automatically enhance your reel with:
+                    Our advanced AI will analyze your media, detect optimal beats, and create smooth transitions for a professional reel.
                   </p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Smart frame analysis to pick the best moments</li>
-                    <li>• Beat detection for perfect music sync</li>
-                    <li>• Seamless auto transitions</li>
-                    <li>• Professional color grading</li>
-                    <li>• Optimal timing and pacing</li>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>✓ Intelligent scene selection</li>
+                    <li>✓ Beat-synced transitions</li>
+                    <li>✓ Automatic color grading</li>
+                    <li>✓ Ken Burns effects</li>
                   </ul>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span>Estimated processing time: 2-5 minutes</span>
-              </div>
+
+              <Button
+                data-tutorial="create-button"
+                size="lg" 
+                variant="hero" 
+                className="w-full text-lg"
+                onClick={handleSubmit}
+                disabled={files.length === 0 || isProcessing || (mode === "template" && !selectedTemplateId)}
+              >
+                {isProcessing ? (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5 animate-spin" />
+                    Processing your reel...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Create My Reel
+                  </>
+                )}
+              </Button>
             </Card>
 
-            <Button 
-              size="lg" 
-              variant="hero" 
-              className="w-full text-lg"
-              onClick={handleSubmit}
-              disabled={files.length === 0 || (mode === "template" && !selectedTemplateId)}
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              Create My Reel
-            </Button>
+            {/* Video Preview */}
+            {(generatedVideoUrl || processingError || isProcessing) && (
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+                <h2 className="mb-4 text-xl font-semibold text-foreground">Preview</h2>
+                
+                {isProcessing && (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                    <Sparkles className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-center text-muted-foreground animate-pulse">
+                      AI is analyzing your media and creating magic ✨
+                    </p>
+                  </div>
+                )}
+
+                {processingError && !isProcessing && (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
+                    <div className="rounded-full bg-destructive/20 p-4">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Something went wrong</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        {processingError}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setProcessingError(null);
+                        setGeneratedVideoUrl(null);
+                      }}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {generatedVideoUrl && !isProcessing && (
+                  <div className="space-y-4">
+                    <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden max-w-md mx-auto shadow-xl">
+                      <video
+                        src={generatedVideoUrl}
+                        controls
+                        autoPlay
+                        loop
+                        className="w-full h-full object-contain"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                    
+                    <div className="flex gap-4 justify-center flex-wrap">
+                      <Button
+                        onClick={() => {
+                          setGeneratedVideoUrl(null);
+                          setFiles([]);
+                          setJobName("");
+                        }}
+                        variant="outline"
+                      >
+                        Create Another Reel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = generatedVideoUrl;
+                          link.download = `${jobName.trim() || 'MyReel'}.mp4`;
+                          link.click();
+                        }}
+                      >
+                        Download Video
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         </div>
       </div>
